@@ -47,3 +47,35 @@ REAL_TIME_HEADER_XPATH = [
 		'xpath': '//*[@id="quotes_summary_secondary_data"]/div/ul/li[3]/span[2]',
 	},
 ]
+
+tbody = '//*[@id="cr1"]/tbody'
+COMPONENT_HEADER_DATA = [
+	{
+		'header': 'name',
+		'xpath': tbody + '/tr/td[2]/a',
+	},
+	{
+		'header': 'last',
+		'xpath': tbody + '/tr/td[3]',
+	},
+	{
+		'header': 'high',
+		'xpath': tbody + '/tr/td[4]',
+	},
+	{
+		'header': 'low',
+		'xpath': tbody + '/tr/td[5]',
+	},
+	{
+		'header': 'change',
+		'xpath': tbody + '/tr/td[6]',
+	},
+	{
+		'header': 'change_per',
+		'xpath': tbody + '/tr/td[7]',
+	},
+	{
+		'header': 'volume',
+		'xpath': tbody + '/tr/td[8]',
+	},
+]
