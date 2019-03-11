@@ -27,10 +27,9 @@ def request_2_website():
 
 if __name__ == '__main__':
 	print('Initialized.')
-	scraper = WebScraping()
-	scraper.verbose = True
-	scraper.driver_lst = request_2_website()
-	scraper.start_scraping()
+	driver_lst = request_2_website()
+	scraper = WebScraping(driver_lst=driver_lst, verbose=True)
+	scraper.scraping()
 # drivers = request_2_website()
 # driver = drivers[0]
 # tr_lst = '//*[@id="cr1"]/tbody/tr'

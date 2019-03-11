@@ -9,15 +9,18 @@ from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.config_tickets import REAL_TIME_HEADER_XPATH, COMPONENT_HEADER_DATA
+from src.settings import SCRAPING_TIME, SLEEP_TIME
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
 
 
 class WebScraping:
-	def __int__(self, driver_lst, verbose=True):
+	def __init__(self, driver_lst, verbose=True):
 		self.driver_lst = driver_lst
 		self.verbose = verbose
+		self.indices_df = pd.DataFrame()
+		self.component_df = pd.DataFrame()
 
 	@staticmethod
 	def scrape_indices(driver: webdriver):
@@ -41,31 +44,64 @@ class WebScraping:
 		return df
 
 	@staticmethod
-	def convert_number(column):
-		return column.apply(lambda x: np.float(x.replace(',', '')))
+	def convert_number(str_number):
+		return np.float(str_number.replace(',', ''))
 
 	@staticmethod
-	def convert_volume(column):
-		lst = []
-		for item in column:
-			char = item[-1]
-			digits = item[:-1]
-			value = np.float(digits)
-			if char == 'K':
-				value *= 10e3
-			elif char == 'M':
-				value *= 10e6
-			else:
-				value = np.float(item.replace(',', ''))
-			lst.append(value)
-		return lst
+	def convert_volume(str_vol):
+		char = str_vol[-1]
+		# To abandon the percentage character at the end of the string
+		digits = str_vol[:-1]
+		value = np.float(digits)
+		if char == 'K':
+			value *= 10e3
+		elif char == 'M':
+			value *= 10e6
+		else:
+			value = np.float(str_vol.replace(',', ''))
+		return value
 
-	def start_scraping(self):
+	@staticmethod
+	def convert_change_per(str_value):
+		# To abandon the percentage character at the end of the string
+		return np.float(str_value[:-1])
+
+	def scraping(self):
 		try:
+			row = {}
+			df = pd.DataFrame()
 			for driver in self.driver_lst:
 				row = self.scrape_indices(driver)
 				df = self.scrape_components(driver)
-				print(row)
-				print(df)
+			self.indices_df = self.indices_df.append(row, axis=0)
+			self.component_df = self.component_df.append(df, axis=0)
+			time.sleep(SLEEP_TIME)
 		except Exception as e:
 			print(e)
+
+	def organize_data(self):
+		# indices dataframe
+		indices_lst = np.unique(self.indices_df['name'])
+		for index_name in indices_lst:
+			df = self.indices_df
+			df = df[df['name'].apply(lambda x: x == index_name)]
+			tmp = dict(name=index_name,
+			           last=np.mean(df['last']),
+			           high=np.max(df['high']),
+			           low=np.min(df['low']),
+			           change=np.mean(df['change']),
+			           chang_per=np.mean(df['change_per']),
+			           volume=df['volume'][-1],
+			           )
+
+		pass
+
+	def start_scraping(self):
+		start = time.time()
+		while True:
+			current = time.time()
+			if current - start < SCRAPING_TIME:
+				self.scraping()
+			else:
+				self.organize_data()
+				start = time.time()
