@@ -30,9 +30,5 @@ if __name__ == '__main__':
 	driver_lst = request_2_website()
 	scraper = WebScraping(driver_lst=driver_lst, verbose=True)
 	scraper.scraping()
-# drivers = request_2_website()
-# driver = drivers[0]
-# tr_lst = '//*[@id="cr1"]/tbody/tr'
-# tr_element_lst = WebDriverWait(driver, 10).until(lambda df: driver.find_elements_by_xpath(tr_lst))
-# print(tr_element_lst[2].text)
-# driver_ = webdriver.Chrome()
+	print(scraper.indices_df)
+	print(scraper.component_df)

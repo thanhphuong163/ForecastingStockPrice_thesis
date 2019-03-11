@@ -52,13 +52,15 @@ class WebScraping:
 		char = str_vol[-1]
 		# To abandon the percentage character at the end of the string
 		digits = str_vol[:-1]
-		value = np.float(digits)
+		value = digits.replace(',', '')
 		if char == 'K':
-			value *= 10e3
+			value = np.float(value) * 10e3
 		elif char == 'M':
-			value *= 10e6
+			value = np.float(value) * 10e6
+		elif char == '-':
+			value = np.float('nan')
 		else:
-			value = np.float(str_vol.replace(',', ''))
+			value = np.float(str_vol)
 		return value
 
 	@staticmethod
@@ -66,15 +68,43 @@ class WebScraping:
 		# To abandon the percentage character at the end of the string
 		return np.float(str_value[:-1])
 
+	@staticmethod
+	def convert_day_range(str_value):
+		tmp = str_value.split('-')
+		low = tmp[0].strip()
+		high = tmp[1].strip()
+		return low, high
+
+	def convert_indices(self, row):
+		tmp = dict()
+		tmp['name'] = row['name']
+		tmp['last'] = self.convert_number(row['last'])
+		tmp['change'] = self.convert_number(row['change'])
+		tmp['change_per'] = self.convert_change_per(row['change_per'])
+		tmp['volume'] = self.convert_volume(row['volume'])
+		tmp['low'], tmp['high'] = self.convert_day_range(row['day_range'])
+		tmp['timestamp'] = row['timestamp']
+		return tmp
+
+	def convert_components(self, df):
+		tmp_df = pd.DataFrame()
+		tmp_df['name'] = df['name']
+		tmp_df['last'] = df['last'].apply(lambda x: self.convert_number(x))
+		tmp_df['high'] = df['high'].apply(lambda x: self.convert_number(x))
+		tmp_df['low'] = df['low'].apply(lambda x: self.convert_number(x))
+		tmp_df['change'] = df['change'].apply(lambda x: self.convert_number(x))
+		tmp_df['change_per'] = df['change_per'].apply(lambda x: self.convert_change_per(x))
+		tmp_df['volume'] = df['volume'].apply(lambda x: self.convert_volume(x))
+		tmp_df['timestamp'] = df['timestamp']
+		return tmp_df
+
 	def scraping(self):
 		try:
-			row = {}
-			df = pd.DataFrame()
 			for driver in self.driver_lst:
 				row = self.scrape_indices(driver)
 				df = self.scrape_components(driver)
-			self.indices_df = self.indices_df.append(row, axis=0)
-			self.component_df = self.component_df.append(df, axis=0)
+				self.indices_df = self.indices_df.append(self.convert_indices(row), ignore_index=True)
+				self.component_df = self.component_df.append(self.convert_components(df), ignore_index=True)
 			time.sleep(SLEEP_TIME)
 		except Exception as e:
 			print(e)
