@@ -5,19 +5,21 @@ import time
 
 import numpy as np
 import pandas as pd
+from pymongo import MongoClient
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.config_tickets import REAL_TIME_HEADER_XPATH, COMPONENT_HEADER_DATA
-from src.settings import SCRAPING_TIME, SLEEP_TIME
+from src.settings import SCRAPING_TIME, SLEEP_TIME, DATABASE, IndColl
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
 
 
 class WebScraping:
-	def __init__(self, driver_lst, verbose=True):
+	def __init__(self, driver_lst, dbClient: MongoClient, verbose=True):
 		self.driver_lst = driver_lst
+		self.database = dbClient.get_database(DATABASE)
 		self.verbose = verbose
 		self.indices_df = pd.DataFrame()
 		self.component_df = pd.DataFrame()
@@ -60,7 +62,7 @@ class WebScraping:
 		elif char == '-':
 			value = np.float('nan')
 		else:
-			value = np.float(str_vol)
+			value = np.float(str_vol.replace(',', ''))
 		return value
 
 	@staticmethod
@@ -106,12 +108,15 @@ class WebScraping:
 				self.indices_df = self.indices_df.append(self.convert_indices(row), ignore_index=True)
 				self.component_df = self.component_df.append(self.convert_components(df), ignore_index=True)
 			time.sleep(SLEEP_TIME)
+			print(self.indices_df)
+			print(self.component_df)
 		except Exception as e:
 			print(e)
 
 	def organize_data(self):
 		# indices dataframe
 		indices_lst = np.unique(self.indices_df['name'])
+		lst = []
 		for index_name in indices_lst:
 			df = self.indices_df
 			df = df[df['name'].apply(lambda x: x == index_name)]
@@ -121,12 +126,17 @@ class WebScraping:
 			           low=np.min(df['low']),
 			           change=np.mean(df['change']),
 			           chang_per=np.mean(df['change_per']),
-			           volume=df['volume'][-1],
+			           volume=list(df['volume'])[-1],
 			           )
-
-		pass
+			lst.append(tmp)
+		indices_coll = self.database.get_collection(IndColl)
+		indices_coll.insert_many(lst)
+		print(indices_coll.find())
+		indices_coll.drop()
 
 	def start_scraping(self):
+		if self.verbose:
+			print('Start scraping...')
 		start = time.time()
 		while True:
 			current = time.time()
