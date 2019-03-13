@@ -10,7 +10,7 @@ from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.config_tickets import REAL_TIME_HEADER_XPATH, COMPONENT_HEADER_DATA
-from src.settings import SCRAPING_TIME, SLEEP_TIME, DATABASE, IndColl
+from src.settings import SCRAPING_TIME, SLEEP_TIME, DATABASE, IndColl, CompoColl
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
@@ -108,31 +108,51 @@ class WebScraping:
 				self.indices_df = self.indices_df.append(self.convert_indices(row), ignore_index=True)
 				self.component_df = self.component_df.append(self.convert_components(df), ignore_index=True)
 			time.sleep(SLEEP_TIME)
-			print(self.indices_df)
-			print(self.component_df)
+			print(len(self.indices_df))
+			print(len(self.component_df))
 		except Exception as e:
-			print(e)
+			print(e.args)
 
 	def organize_data(self):
 		# indices dataframe
 		indices_lst = np.unique(self.indices_df['name'])
-		lst = []
+		lst_1 = []
 		for index_name in indices_lst:
 			df = self.indices_df
 			df = df[df['name'].apply(lambda x: x == index_name)]
-			tmp = dict(name=index_name,
-			           last=np.mean(df['last']),
-			           high=np.max(df['high']),
-			           low=np.min(df['low']),
-			           change=np.mean(df['change']),
-			           chang_per=np.mean(df['change_per']),
-			           volume=list(df['volume'])[-1],
-			           )
-			lst.append(tmp)
-		indices_coll = self.database.get_collection(IndColl)
-		indices_coll.insert_many(lst)
-		print(indices_coll.find())
-		indices_coll.drop()
+			tmp = dict(
+				name=index_name,
+				last=np.mean(df['last']),
+				high=np.max(df['high']),
+				low=np.min(df['low']),
+				change=np.mean(df['change']),
+				chang_per=np.mean(df['change_per']),
+				volume=list(df['volume'])[-1],
+				time=time.time(),
+			)
+			lst_1.append(tmp)
+		indices_coll = self.database[IndColl]
+		indices_coll.insert_many(lst_1)
+
+		# Components dataframe
+		component_lst = np.unique(self.component_df['name'])
+		lst_2 = []
+		for component_name in component_lst:
+			df = self.component_df
+			df = df[df['name'].apply(lambda x: x == component_name)]
+			tmp = dict(
+				name=component_name,
+				last=np.mean(df['last']),
+				high=np.max(df['high']),
+				low=np.min(df['low']),
+				change=np.mean(df['change']),
+				chang_per=np.mean(df['change_per']),
+				volume=list(df['volume'])[-1],
+				time=time.time(),
+			)
+			lst_2.append(tmp)
+		components_coll = self.database[CompoColl]
+		components_coll.insert_many(lst_2)
 
 	def start_scraping(self):
 		if self.verbose:
