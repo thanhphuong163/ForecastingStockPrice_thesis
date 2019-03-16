@@ -47,23 +47,29 @@ class WebScraping:
 
 	@staticmethod
 	def convert_number(str_number):
-		return np.float(str_number.replace(',', ''))
+		try:
+			return np.float(str_number.replace(',', ''))
+		except:
+			return np.float('nan')
 
 	@staticmethod
 	def convert_volume(str_vol):
-		char = str_vol[-1]
-		# To abandon the percentage character at the end of the string
-		digits = str_vol[:-1]
-		value = digits.replace(',', '')
-		if char == 'K':
-			value = np.float(value) * 10e3
-		elif char == 'M':
-			value = np.float(value) * 10e6
-		elif char == '-':
-			value = np.float('nan')
-		else:
-			value = np.float(str_vol.replace(',', ''))
-		return value
+		try:
+			char = str_vol[-1]
+			# To abandon the percentage character at the end of the string
+			digits = str_vol[:-1]
+			value = digits.replace(',', '')
+			if char == 'K':
+				value = np.float(value) * 10e3
+			elif char == 'M':
+				value = np.float(value) * 10e6
+			elif char == '-':
+				value = np.float('nan')
+			else:
+				value = np.float(str_vol.replace(',', ''))
+			return value
+		except:
+			return np.float('nan')
 
 	@staticmethod
 	def convert_change_per(str_value):
@@ -72,10 +78,13 @@ class WebScraping:
 
 	@staticmethod
 	def convert_day_range(str_value):
-		tmp = str_value.split('-')
-		low = tmp[0].strip()
-		high = tmp[1].strip()
-		return low, high
+		try:
+			tmp = str_value.split('-')
+			low = np.float(tmp[0].strip())
+			high = np.float(tmp[1].strip())
+			return low, high
+		except:
+			return np.float('nan'), np.float('nan')
 
 	def convert_indices(self, row):
 		tmp = dict()
