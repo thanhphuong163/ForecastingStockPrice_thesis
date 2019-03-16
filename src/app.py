@@ -1,4 +1,5 @@
 import datetime
+from datetime import datetime as dt
 
 import dash
 import dash_core_components as dcc
@@ -27,7 +28,14 @@ app.layout = html.Div(
              id='input',
              options=[{'label': i, 'value': i} for i in Stock_name],
              value='HNX 30 (HNX30)'
-         )],
+         ),
+         dcc.DatePickerRange(
+             id='my-date-picker-range',
+             min_date_allowed=dt(1995, 8, 5),
+             max_date_allowed=dt(2019, 3, 15),
+             initial_visible_month=dt(2019, 3, 15),
+         ),
+     ],
          style={'width': '20%', 'display': 'inline-block'}
      ),
      html.Div(id='output', style={'width': '80%', 'float': 'right'}),
@@ -35,9 +43,11 @@ app.layout = html.Div(
 )
 
 
-@app.callback(Output('output', component_property='children'),
-              [Input(component_id='input', component_property='value')])
-def update_graph_scatter(input_data):
+@app.callback(Output('output', 'children'),
+              [Input('input', 'value'),
+               Input('my-date-picker-range', 'start_date'),
+               Input('my-date-picker-range', 'end_date')])
+def update_graph_scatter(input_data, start_date, end_date):
     try:
 
         mng_client = MongoClient()
