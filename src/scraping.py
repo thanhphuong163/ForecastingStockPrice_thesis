@@ -74,7 +74,10 @@ class WebScraping:
 	@staticmethod
 	def convert_change_per(str_value):
 		# To abandon the percentage character at the end of the string
-		return np.float(str_value[:-1])
+		try:
+			return np.float(str_value[:-1])
+		except:
+			return np.float('nan')
 
 	@staticmethod
 	def convert_day_range(str_value):
