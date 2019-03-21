@@ -10,6 +10,8 @@ import plotly.graph_objs as go
 from dash.dependencies import Output, Input
 from pymongo import MongoClient
 
+from src.settings import DATABASE, IndColl, INDICES_LST
+
 
 def _parseTime(date_time_str):
     date_time_obj = dt.strptime(date_time_str, '%b %d, %Y')
@@ -18,7 +20,8 @@ def _parseTime(date_time_str):
 def convert_data(df):
     df['Date'] = df['Date'].apply(lambda x: _parseTime(x))
 
-Stock_name = ['HNX 30 (HNX30)', 'VN 30 (VNI30)']
+
+Stock_name = INDICES_LST
 
 timing = deque()
 
@@ -47,6 +50,7 @@ app.layout = html.Div(
      ]
 )
 
+
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
                Input('my-date-picker-range', 'start_date'),
@@ -54,8 +58,8 @@ app.layout = html.Div(
 def update_graph_scatter(input_data, start_date, end_date):
     try:
         mng_client = MongoClient()
-        mng_db = mng_client['StockDB']
-        csvTomongo = 'indicesCollection'
+        mng_db = mng_client[DATABASE]
+        csvTomongo = IndColl
         db_cm = mng_db[csvTomongo]
         test = dt(2017, 8, 25, 23, 59)
 
@@ -109,5 +113,7 @@ def update_graph_scatter(input_data, start_date, end_date):
         with open('errors.txt', 'a') as f:
             f.write(str(e))
             f.write('\n')
+
+
 if __name__ == '__main__':
     app.run_server(debug=True)
