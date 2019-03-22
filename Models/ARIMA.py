@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:11
-from datetime import datetime
 
 from statsmodels.tsa.arima_model import ARIMA
 
@@ -17,10 +16,10 @@ class ARIMAMODEL:
 	def fit(self):
 		self.model_fit = self.model.fit()
 
-	def predict(self):
+	def predict(self, start, end):
 		fmt = '%Y-%m-%d'
-		predictions = self.model.predict(
-			start=datetime.strptime('2016-03-1', fmt),
-			end=datetime.strptime('2016-03-30', fmt)
+		predictions = self.model_fit.predict(
+			start=start,
+			end=end,
 		)
 		return predictions

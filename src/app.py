@@ -10,7 +10,7 @@ import plotly.graph_objs as go
 from dash.dependencies import Output, Input
 from pymongo import MongoClient
 
-from src.settings import DATABASE, IndColl, INDICES_LST
+from src.settings import DATABASE, IndColl, INDICES_LST, HOST
 
 
 def _parseTime(date_time_str):
@@ -57,10 +57,9 @@ app.layout = html.Div(
                Input('my-date-picker-range', 'end_date')])
 def update_graph_scatter(input_data, start_date, end_date):
     try:
-        mng_client = MongoClient()
+        mng_client = MongoClient(HOST)
         mng_db = mng_client[DATABASE]
-        csvTomongo = IndColl
-        db_cm = mng_db[csvTomongo]
+        db_cm = mng_db[IndColl]
         test = dt(2017, 8, 25, 23, 59)
 
         if start_date is not None:

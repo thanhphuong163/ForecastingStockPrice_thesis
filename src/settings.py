@@ -8,10 +8,10 @@ __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
 
 # time interval in a minute for scraping data
-SCRAPING_TIME = 20
+SCRAPING_TIME = 40
 
 # time to sleep while scraping
-SLEEP_TIME = 3
+SLEEP_TIME = 5
 
 # Database host and name
 HOST = 'mongodb://localhost:27017/'
