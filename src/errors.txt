@@ -10,3 +10,6 @@ unconverted data remains:  17:00:00
 'time'
 unconverted data remains:  17:00:00
 unconverted data remains:  17:00:00
+unconverted data remains:  17:00:00
+unconverted data remains:  17:00:00
+'time'
