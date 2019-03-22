@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:10
+import time
+
 import pandas as pd
 from pymongo import MongoClient
 
@@ -24,3 +26,4 @@ if __name__ == '__main__':
 	for i in df.index:
 		row = dict(df.loc[i, :])
 		mock_collection.insert_one(row)
+		time.sleep(10)
