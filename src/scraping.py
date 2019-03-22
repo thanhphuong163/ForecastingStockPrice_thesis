@@ -19,7 +19,7 @@ __email__ = 'phuongnt18@vng.com.vn'
 class WebScraping:
 	def __init__(self, driver_lst, dbClient: MongoClient, verbose=True):
 		self.driver_lst = driver_lst
-		self.database = dbClient.get_database(DATABASE)
+		self.database = dbClient[DATABASE]
 		self.verbose = verbose
 		self.indices_df = pd.DataFrame()
 		self.component_df = pd.DataFrame()
