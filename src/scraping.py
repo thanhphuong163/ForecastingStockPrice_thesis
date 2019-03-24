@@ -120,13 +120,11 @@ class WebScraping:
 				self.indices_df = self.indices_df.append(self.convert_indices(row), ignore_index=True)
 				self.component_df = self.component_df.append(self.convert_components(df), ignore_index=True)
 			time.sleep(SLEEP_TIME)
-			print(len(self.indices_df))
-			print(len(self.component_df))
 		except Exception as e:
 			print(e.args)
 
 	def organize_data(self):
-		# indices dataframe
+		# To insert indices dataframe to indicesCollection in database
 		indices_lst = np.unique(self.indices_df['name'])
 		lst_1 = []
 		for index_name in indices_lst:
@@ -146,7 +144,7 @@ class WebScraping:
 		indices_coll = self.database[IndColl]
 		indices_coll.insert_many(lst_1)
 
-		# Components dataframe
+		# To insert Components dataframe to ComponentCollection in database
 		component_lst = np.unique(self.component_df['name'])
 		lst_2 = []
 		for component_name in component_lst:
@@ -165,6 +163,10 @@ class WebScraping:
 			lst_2.append(tmp)
 		components_coll = self.database[CompoColl]
 		components_coll.insert_many(lst_2)
+
+		# Clean data in two dataframes self.component_df and self.indices_df
+		self.indices_df = self.indices_df.drop(self.indices_df.index, inplace=True)
+		self.component_df = self.component_df.drop(self.component_df.index, inplace=True)
 
 	def start_scraping(self):
 		if self.verbose:
