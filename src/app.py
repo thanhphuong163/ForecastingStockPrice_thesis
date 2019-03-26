@@ -7,9 +7,10 @@ import dash_html_components as html
 import pandas as pd
 import plotly.graph_objs as go
 from dash.dependencies import Output, Input, Event
+from plotly import tools
 from pymongo import MongoClient
 
-from src.settings import DATABASE, IndColl, INDICES_LST, HOST
+from src.settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl
 
 
 def _parseTime(date_time_str):
@@ -45,7 +46,7 @@ app.layout = html.Div(
                      dcc.Dropdown(
                          id='input',
                          options=[{'label': i, 'value': i} for i in Stock_name],
-                         value='HNX 30 (HNX30)'
+                         value='VN 30 (VNI30)'
                      ),
                      dcc.DatePickerRange(
                          id='my-date-picker-range',
@@ -78,7 +79,8 @@ def update_graph_scatter(input_data, start_date, end_date):
     try:
         mng_client = MongoClient(HOST)
         mng_db = mng_client[DATABASE]
-        db_cm = mng_db[IndColl]
+        db_cm_ind = mng_db[IndColl]
+        db_cm_mock = mng_db[MockColl]
 
         if start_date is not None:
             start_date = dt.strptime(start_date, '%Y-%m-%d')
@@ -88,11 +90,11 @@ def update_graph_scatter(input_data, start_date, end_date):
             end_date = float(end_date.replace(tzinfo=timezone.utc).timestamp())
 
         if start_date is not None and end_date is not None:
-            df = pd.DataFrame(list(db_cm.find(
+            df_mock = pd.DataFrame(list(db_cm_mock.find(
                 {
                     "$and": [
                         {
-                            "name": input_data
+                            # "name": input_data
                         },
                         {
                             "time":
@@ -104,29 +106,56 @@ def update_graph_scatter(input_data, start_date, end_date):
                     ]
                 })))
         else:
-            df = pd.DataFrame(list(db_cm.find({"name": input_data})))
+            df_mock = pd.DataFrame(list(db_cm_mock.find(
+                {
+                    # "name": input_data
+                }
+            )))
 
-        df['time'] = df['time'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
-        df = df.sort_values(by=['time'])
-        df['last'] = df['last'].round(4)
+        df_ind = pd.DataFrame(list(db_cm_ind.find(
+            {
+                "name": input_data
+            }
+        )))
+        df_mock = df_mock.rename(columns=lambda x: x.strip())
+        df_mock['time'] = df_mock['time'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
+        df_ind['time'] = df_ind['time'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
+
+        df_mock = df_mock.sort_values(by=['time'])
+        df_ind = df_ind.sort_values(by=['time'])
+        df_mock['last'] = df_mock['last'].round(4)
+        df_ind['last'] = df_ind['last'].round(4)
+
+        trace_ind = go.Scatter(
+            x=df_ind['time'],
+            y=df_ind['last'],
+            mode='lines',
+            line=dict(color='#28a745'),
+            name=input_data,
+            # opacity=0.8
+        )
+
+        trace_mock = go.Scatter(
+            x=df_mock['time'],
+            y=df_mock['last'],
+            mode='lines',
+            line=dict(color='#4f94c4'),
+            name=input_data,
+            opacity=0.8
+        )
+
+        figure = tools.make_subplots(rows=1,
+                                     cols=2,
+                                     shared_yaxes=True,
+                                     print_grid=False)
+
+        figure.append_trace(trace_ind, 1, 1)
+        figure.append_trace(trace_mock, 1, 2)
+        figure['layout'].update(title=input_data)
+
         return dcc.Graph(
             id='example-graph',
-            figure={
-                'data': [
-                    go.Scatter(
-                        x=df['time'],
-                        y=df['last'],
-                        mode='lines',
-                        line=dict(color='#4f94c4'),
-                        name=input_data,
-                        opacity=0.8
-                    )
-                ],
-                'layout': go.Layout(
-                    title=input_data,
-                    yaxis=dict(title='close price')
-                )
-            }
+            figure=figure
         )
     except Exception as e:
         with open('errors.txt', 'a') as f:

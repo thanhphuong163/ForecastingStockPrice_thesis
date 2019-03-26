@@ -19,6 +19,8 @@ DATABASE = 'StockDB'
 IndColl = 'indicesCollection'
 CompoColl = 'ComponentsCollection'
 History_data = 'HistoryData'
+MockColl = 'MockCollection'
+
 
 # Data path
 PROJ_PATH = os.getcwd()
