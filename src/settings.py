@@ -21,6 +21,11 @@ CompoColl = 'ComponentsCollection'
 History_data = 'HistoryData'
 MockColl = 'MockCollection'
 
+# Indice options
+Indice_options = {
+    'VN 30 (VNI30)': ['ROS', 'TCB', 'HPG'],
+    'HNX 30 (HNX30)': ['SHB', 'ACB', 'HUT']
+}
 
 # Data path
 PROJ_PATH = os.getcwd()
