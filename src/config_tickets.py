@@ -79,3 +79,20 @@ COMPONENT_HEADER_DATA = [
 		'xpath': tbody + '/tr/td[8]',
 	},
 ]
+
+# Configure for getting historical data
+AJAX_URL = 'https://www.investing.com/instruments/HistoricalDataAjax'
+HIS_DATA_HEADERS = [
+	{
+		'name': 'VN 30',
+		'curr_id': '41064',
+		'smlID': '2058618',
+		'header': 'VN 30 Historical Data',
+	},
+	{
+		'name': 'HNX 30',
+		'curr_id': '995072',
+		'smlID': '2144064',
+		'header': 'HNX 30 Historical Data',
+	},
+]

@@ -35,3 +35,9 @@ MODELS_PATH = PROJ_PATH + '/../Models/'
 
 # List of indices
 INDICES_LST = ['HNX 30 (HNX30)', 'VN 30 (VNI30)']
+
+# Url header for requests
+urlheader = {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.75 Safari/537.36",
+    "X-Requested-With": "XMLHttpRequest"
+}

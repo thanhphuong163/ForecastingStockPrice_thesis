@@ -2,15 +2,19 @@
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:57
 import time
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
+from dateutil.relativedelta import relativedelta
 from pymongo import MongoClient
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 
-from src.config_tickets import REAL_TIME_HEADER_XPATH, COMPONENT_HEADER_DATA
-from src.settings import SCRAPING_TIME, SLEEP_TIME, DATABASE, IndColl, CompoColl
+from src.config_tickets import REAL_TIME_HEADER_XPATH, COMPONENT_HEADER_DATA, HIS_DATA_HEADERS, AJAX_URL
+from src.settings import SCRAPING_TIME, SLEEP_TIME, DATABASE, IndColl, CompoColl, History_data, urlheader
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
@@ -88,6 +92,11 @@ class WebScraping:
 			return low, high
 		except:
 			return np.float('nan'), np.float('nan')
+
+	@staticmethod
+	def convert_date(str_value):
+		fmt = '%b %d, %Y'
+		return datetime.strptime(str_value, fmt)
 
 	def convert_indices(self, row):
 		tmp = dict()
@@ -179,3 +188,57 @@ class WebScraping:
 			else:
 				self.organize_data()
 				start = time.time()
+
+	def parse_historical_data_response(self, response, ticket_name):
+		"""
+		To parse html doc into list of dict
+		:param ticket_name: to pass ticket's name to data
+		:param response: html doc
+		:return: list of dict
+		"""
+		soup = BeautifulSoup(response, 'html.parser')
+		tbody = soup.find('tbody')
+		lst_row = tbody.find_all('tr')
+		lst_data = []
+		for row in lst_row:
+			lst_col = row.find_all('td')
+			dct_row = dict(
+				date=self.convert_date(lst_col[0].text),
+				name=ticket_name,
+				price=self.convert_number(lst_col[1].text),
+				open=self.convert_number(lst_col[2].text),
+				high=self.convert_number(lst_col[3].text),
+				low=self.convert_number(lst_col[4].text),
+				volume=self.convert_volume(lst_col[5].text),
+				change_per=self.convert_change_per(lst_col[6].text)
+			)
+			lst_data.append(dct_row)
+		return lst_data
+
+	def scrape_historical_data(self, years=0, months=0, days=10):
+		# Get the list of tickets' headers
+		lst_ticket = HIS_DATA_HEADERS
+
+		# Setting parameter for payload
+		today = datetime.today()
+		end_date = str(today.month) + '/' + str(today.day) + '/' + str(today.year)
+		past_day = datetime.today() - relativedelta(years=years, months=months, days=days)
+		start_date = str(past_day.month) + '/' + str(past_day.day) + '/' + str(past_day.year)
+		payload = {
+			'st_date': start_date,
+			'end_date': end_date,
+			'interval_sec': 'Daily',
+			'sort_col': 'date',
+			'sort_ord': 'DESC',
+			'action': 'historical_data'
+		}
+
+		historical_data_coll = self.database[History_data]
+		historical_data_coll.delete_many({})
+		for ticket in lst_ticket:
+			payload['curr_id'] = ticket['curr_id']
+			payload['smlID'] = ticket['smlID']
+			payload['header'] = ticket['header']
+			response = requests.post(AJAX_URL, data=payload, headers=urlheader)
+			lst_data = self.parse_historical_data_response(response.content, ticket_name=ticket['name'])
+			historical_data_coll.insert_many(lst_data)
