@@ -2,8 +2,6 @@
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:56
 
-import requests
-from bs4 import BeautifulSoup
 from pymongo import MongoClient
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -42,22 +40,10 @@ def connect_2_dbServer():
 
 
 def get_historical_data():
-	url = 'https://www.investing.com/instruments/HistoricalDataAjax'
-	payload = {
-		'curr_id': '41064',
-		'smlID': '2058618',
-		'header': 'VN 30 Historical Data',
-		'st_date': '3/15/2010',
-		'end_date': '04/15/2019',
-		'interval_sec': 'Daily',
-		'sort_col': 'date',
-		'sort_ord': 'DESC',
-		'action': 'historical_data'
-	}
-	res = requests.post(url, data=payload, headers=urlheader)
-	soup = BeautifulSoup(res.content, 'html.parser')
-	tbody = soup.find('tbody')
-	return tbody
+	client = connect_2_dbServer()
+	driver_lst = request_2_website()
+	scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
+	scraper.scrape_historical_data(years=3)
 
 
 def test():
@@ -71,10 +57,16 @@ def test():
 
 
 if __name__ == '__main__':
-	print('Initialized.')
-	client = connect_2_dbServer()
-	driver_lst = request_2_website()
-	scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
-	# scraper.start_scraping()
-	scraper.scrape_historical_data(years=1)
-	print('Done.')
+	# start = datetime.today() - relativedelta(months=4)
+	# end = datetime.today()
+	# print('Initialized.')
+	# client = connect_2_dbServer()
+	# # driver_lst = request_2_website()
+	# # scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
+	# # # scraper.start_scraping()
+	# # scraper.scrape_historical_data(years=2)
+	# # print('Done.')
+	# query_data = QueryData(dbClient=client)
+	# lst_symbol = query_data.get_list_ticket()
+	# print(lst_symbol)
+	get_historical_data()

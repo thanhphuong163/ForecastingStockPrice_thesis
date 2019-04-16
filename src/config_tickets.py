@@ -95,4 +95,46 @@ HIS_DATA_HEADERS = [
 		'smlID': '2144064',
 		'header': 'HNX 30 Historical Data',
 	},
+	{
+		'name': 'Asia Commercial Bank',
+		'curr_id': '41913',
+		'smlID': '1286128',
+		'header': 'ACB Historical Data',
+	},
+	{
+		'name': 'Advanced Compound Stone JSC',
+		'curr_id': '42260',
+		'smlID': '1292027',
+		'header': 'VCS Historical Data',
+	},
+	{
+		'name': 'Baoviet Securities Company',
+		'curr_id': '41942',
+		'smlID': '1286621',
+		'header': 'BVS Historical Data',
+	},
+	{
+		'name': 'Bim Son Cement',
+		'curr_id': '41928',
+		'smlID': '1286383',
+		'header': 'BCC Historical Data',
+	},
+	{
+		'name': 'DANANG HOUSING',
+		'curr_id': '42088',
+		'smlID': '1289103',
+		'header': 'NDN Historical Data',
+	},
+	{
+		'name': 'Materials Transport Cement JSC',
+		'curr_id': '42292',
+		'smlID': '1292571',
+		'header': 'VTV Historical Data',
+	},
+	{
+		'name': 'Petrovietnam Southern Gas JSC',
+		'curr_id': '42109',
+		'smlID': '1289460',
+		'header': 'PGS Historical Data',
+	}
 ]
