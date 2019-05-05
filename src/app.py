@@ -7,7 +7,7 @@ import dash_html_components as html
 import pandas as pd
 import plotly.graph_objs as go
 import pymongo
-from dash.dependencies import Output, Input, Event
+from dash.dependencies import Output, Input, Event, State
 from plotly import tools
 from pymongo import MongoClient
 from settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options
@@ -20,6 +20,82 @@ def _parseTime(date_time_str):
 def convert_data(df):
     df['Date'] = df['Date'].apply(lambda x: _parseTime(x))
 
+
+# updates hidden div that stores the last clicked menu tab
+def generate_active_menu_tab_callback():
+    def update_current_tab_name(n_style, n_time):
+        if n_style >= n_time:
+            return "Style"
+        return "Time"
+
+    return update_current_tab_name
+
+
+# show/hide 'time' menu content
+def generate_studies_content_tab_callback():
+    def studies_tab(current_tab):
+        if current_tab == "Time":
+            return {"display": "block", "textAlign": "left", "marginTop": "30"}
+        return {"display": "none"}
+
+    return studies_tab
+
+
+# show/hide 'style' menu content
+def generate_style_content_tab_callback():
+    def style_tab(current_tab):
+        if current_tab == "Style":
+            return {"display": "block", "textAlign": "left", "marginTop": "30"}
+        return {"display": "none"}
+
+    return style_tab
+
+
+# updates style of header 'time' in menu
+def generate_update_time_header_callback():
+    def studies_header(current_tab, old_style):
+        if current_tab == "Time":
+            old_style["borderBottom"] = "2px solid" + " " + "#45df7e"
+        else:
+            old_style["borderBottom"] = "2px solid" + " " + "rgba(68,149,209,.9)"
+        return old_style
+
+    return studies_header
+
+
+# updates style of header 'style' in menu
+def generate_update_style_header_callback():
+    def style_header(current_tab, old_style):
+        if current_tab == "Style":
+            old_style["borderBottom"] = "2px solid" + " " + "#45df7e"
+        else:
+            old_style["borderBottom"] = "2px solid" + " " + "rgba(68,149,209,.9)"
+        return old_style
+
+    return style_header
+
+
+# line
+def line_trace(df):
+    trace = go.Scatter(
+        x=df["time"], y=df["close"], mode="lines", showlegend=False, name="line"
+    )
+    return trace
+
+
+# candlestick
+def candlestick_trace(df):
+    return go.Candlestick(
+        x=df["time"],
+        open=df["open"],
+        high=df["high"],
+        low=df["low"],
+        close=df["close"],
+        increasing=dict(line=dict(color="#00ff00")),
+        decreasing=dict(line=dict(color="white")),
+        showlegend=False,
+        name="candlestick",
+    )
 
 Stock_name = INDICES_LST
 
@@ -74,6 +150,125 @@ def get_color(a, b):
     else:
         return "#da5657"
 
+
+def chart_div():
+    return html.Div(
+        id='graph_div',
+        children=[
+            # menu-bar
+            html.Div(
+                children=[
+                    html.Span(
+                        "×",
+                        id="close_menu",
+                        n_clicks=0,
+                        style={
+                            "fontSize": "16",
+                            "float": "right",
+                            "paddingRight": "5",
+                            "verticalAlign": "textTop",
+                            "cursor": "pointer",
+                            "color": "white",
+                        },
+                    ),
+                    html.Span(
+                        "Style",
+                        id="style_header",
+                        n_clicks_timestamp=2,
+                        style={
+                            "top": "0",
+                            "float": "left",
+                            "marginLeft": "5",
+                            "marginRight": "5",
+                            "textDecoration": "none",
+                            "cursor": "pointer",
+                            "color": "white",
+                        },
+                    ),
+                    html.Span(
+                        "Time",
+                        id="time_header",
+                        n_clicks_timestamp=1,
+                        style={
+                            "float": "left",
+                            "textDecoration": "none",
+                            "cursor": "pointer",
+                            "color": "white",
+                        },
+                    ),
+                    html.Div(
+                        html.Div(
+                            dcc.RadioItems(
+                                id="chart_type",
+                                options=[
+                                    {"label": "candlestick", "value": "candlestick_trace"},
+                                    {"label": "line", "value": "line_trace"},
+                                ],
+                                value="line_trace",
+                            ),
+                            id="type_tab",
+                            style={"marginTop": "30", "textAlign": "left"},
+                        )
+                    ),
+                    html.Div(
+                        html.Div(
+                            dcc.RadioItems(
+                                id="timing",
+                                options=[
+                                    {"label": "1 day"},
+                                    {"label": "1 week"},
+                                    {"label": "1 month"},
+                                    {"label": "1 year"},
+                                    {"label": "all"},
+                                ],
+                                value="all",
+                            ),
+                            id="timing_tab",
+                            style={"marginTop": "30", "textAlign": "left"},
+                        ),
+                    ),
+                ],
+                id="menu",
+                className="not_visible",
+                style={
+                    "overflow": "auto",
+                    "borderRight": "1px solid" + "rgba(68,149,209,.9)",
+                    "backgroundImage": "-webkit-linear-gradient(top,#18252e,#2a516e 63%)",
+                    "zIndex": "20",
+                    "width": "45%",
+                    "height": "100%",
+                    "position": "absolute",
+                    "left": "0",
+                    "top": "27px",
+                },
+            ),
+            html.Div(
+                [
+                    html.Span(
+                        "Chart ",
+                        style={"float": "left", "marginRight": "5px", "color": "white"},
+                    ),
+                    html.Span(
+                        "☰",
+                        n_clicks=0,
+                        id="menu_button",
+                        style={"float": "left", "color": "white", "cursor": "pointer"},
+                    ),
+                ],
+                className="row",
+                style={
+                    "padding": "3",
+                    "height": "20px",
+                    "margin": "0 0 5 0",
+                    "backgroundImage": "-webkit-linear-gradient(top,#18252e,#2a516e 63%)",
+                },
+            ),
+
+            # Graph div
+            html.Div(id='output'),
+        ],
+    )
+
 app.layout = html.Div(
     [
         dcc.Interval(id="interval", interval=1 * 1000, n_intervals=0),
@@ -111,12 +306,35 @@ app.layout = html.Div(
             style={"backgroundColor": "#18252e", "padding": "20px"},
             className='three columns selection',
         ),
-        html.Div(id='output', className='nine columns', style={'float': 'right'}),
+        html.Div(
+            [chart_div()],
+            style={"height": "70%", "margin": "0px 5px", "float": "right"},
+            id="charts",
+            className="nine columns",
+        ),
+        # html.Div(id='output', className='nine columns', style={'float': 'right'}),
     ],
     style={"paddingTop": "15px", "backgroundColor": "#1a2d46", "height": "100vh"}
 )
 
 
+# open close menu
+@app.callback(
+    Output("menu", "className"),
+    [Input("menu_button", "n_clicks"),
+     Input("close_menu", "n_clicks")],
+    [State("menu", "className")],
+)
+def open_closeMenu(n, n2, className):
+    if n == 0:
+        return "not_visible"
+    if className == "visible":
+        return "not_visible"
+    else:
+        return "visible"
+
+
+#set live clock
 @app.callback(Output("live_clock", "children"), [Input("interval", "n_intervals")])
 def update_time(t):
     return dt.now().strftime("%H:%M:%S")
@@ -127,6 +345,9 @@ def set_indice_options(selected_indice):
     return [{'label': i, 'value': i} for i in Indice_options[selected_indice]]
 
 
+# @app.callback()
+
+#indice information
 @app.callback((Output("indice-information", "children")), [Input("input", "value")])
 def get_indice_informations(selected_indice):
     mng_client = MongoClient(HOST)
@@ -212,9 +433,7 @@ def update_graph_scatter(input_data, start_date, end_date):
             df_mock = pd.DataFrame(list(db_cm_mock.find(
                 {
                     "$and": [
-                        {
-                            # "name": input_data
-                        },
+                        {},
                         {
                             "time":
                                 {
@@ -226,9 +445,7 @@ def update_graph_scatter(input_data, start_date, end_date):
                 })))
         else:
             df_mock = pd.DataFrame(list(db_cm_mock.find(
-                {
-                    # "name": input_data
-                }
+                {}
             )))
 
         df_ind = pd.DataFrame(list(db_cm_ind.find(
@@ -262,15 +479,16 @@ def update_graph_scatter(input_data, start_date, end_date):
             name=input_data,
             opacity=0.8
         )
-
-        figure = tools.make_subplots(rows=1,
+        rows = 1
+        figure = tools.make_subplots(rows=rows,
                                      cols=2,
                                      shared_yaxes=True,
                                      print_grid=False)
 
         figure.append_trace(trace_ind, 1, 1)
         figure.append_trace(trace_mock, 1, 2)
-        figure['layout'].update(title=input_data)
+        figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 5}
+        figure['layout'].update(title=input_data, paper_bgcolor="#18252E", plot_bgcolor="#18252E")
 
         return dcc.Graph(
             id='example-graph',
