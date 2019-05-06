@@ -156,8 +156,12 @@ def chart_div():
         id='graph_div',
         children=[
             # menu-bar
+            dcc.Interval(id="interval1", interval=1 * 1000, n_intervals=0),
             html.Div(
                 children=[
+                    html.Div(
+                        "Style", id="menu_tab", style={"display": "none"}
+                    ),
                     html.Span(
                         "×",
                         id="close_menu",
@@ -183,6 +187,7 @@ def chart_div():
                             "textDecoration": "none",
                             "cursor": "pointer",
                             "color": "white",
+                            "padding": "4px"
                         },
                     ),
                     html.Span(
@@ -194,42 +199,43 @@ def chart_div():
                             "textDecoration": "none",
                             "cursor": "pointer",
                             "color": "white",
+                            "padding": "4px"
                         },
                     ),
                     html.Div(
-                        html.Div(
-                            dcc.RadioItems(
-                                id="chart_type",
-                                options=[
-                                    {"label": "candlestick", "value": "candlestick_trace"},
-                                    {"label": "line", "value": "line_trace"},
-                                ],
-                                value="line_trace",
-                            ),
-                            id="type_tab",
-                            style={"marginTop": "30", "textAlign": "left"},
-                        )
+                        dcc.RadioItems(
+                            id="chart_type",
+                            options=[
+                                {"label": "candlestick", "value": "candlestick_trace"},
+                                {"label": "line", "value": "line_trace"},
+                            ],
+                            value="line_trace",
+                            style={"color": "white", "marginTop": "30px", },
+                            labelStyle={'display': 'block'}
+                        ),
+                        id="type_tab",
+                        style={"textAlign": "left", "display": "block", 'marginLeft': '2px'},
                     ),
                     html.Div(
-                        html.Div(
-                            dcc.RadioItems(
-                                id="timing",
-                                options=[
-                                    {"label": "1 day"},
-                                    {"label": "1 week"},
-                                    {"label": "1 month"},
-                                    {"label": "1 year"},
-                                    {"label": "all"},
-                                ],
-                                value="all",
-                            ),
-                            id="timing_tab",
-                            style={"marginTop": "30", "textAlign": "left"},
+                        dcc.RadioItems(
+                            id="timing",
+                            options=[
+                                {'label': '1 day', 'value': 'day'},
+                                {'label': '1 week', 'value': 'week'},
+                                {'label': '1 month', 'value': 'month'},
+                                {'label': '1 year', 'value': 'year'},
+                                {'label': 'all', 'value': 'all'},
+                            ],
+                            value='all',
+                            style={"color": "white", "marginTop": "30px", },
+                            labelStyle={'display': 'block', 'marginLeft': '2px'}
                         ),
+                        id="timing_tab",
+                        style={"textAlign": "left", "display": "block"},
                     ),
                 ],
                 id="menu",
-                className="not_visible",
+                className="not_visible ",
                 style={
                     "overflow": "auto",
                     "borderRight": "1px solid" + "rgba(68,149,209,.9)",
@@ -258,6 +264,7 @@ def chart_div():
                 className="row",
                 style={
                     "padding": "3",
+                    "paddingLeft": "20px",
                     "height": "20px",
                     "margin": "0 0 5 0",
                     "backgroundImage": "-webkit-linear-gradient(top,#18252e,#2a516e 63%)",
@@ -267,6 +274,13 @@ def chart_div():
             # Graph div
             html.Div(id='output'),
         ],
+        style={
+            "position": "relative",
+            "border": "1px solid",
+            "borderColor": "rgba(68,149,209,.9)",
+            "overflow": "hidden",
+            "marginBottom": "2px",
+        }
     )
 
 app.layout = html.Div(
@@ -318,7 +332,7 @@ app.layout = html.Div(
 )
 
 
-# open close menu
+# open or close graph menu
 @app.callback(
     Output("menu", "className"),
     [Input("menu_button", "n_clicks"),
@@ -333,6 +347,39 @@ def open_closeMenu(n, n2, className):
     else:
         return "visible"
 
+
+# hide/show menu tab content if clicked or not
+app.callback(
+    Output("menu_tab", "children"),
+    [
+        Input("style_header", "n_clicks_timestamp"),
+        Input("time_header", "n_clicks_timestamp"),
+    ],
+)(generate_active_menu_tab_callback())
+
+# hide/show menu tab content if clicked or not
+app.callback(
+    Output("type_tab", "style"), [Input("menu_tab", "children")]
+)(generate_style_content_tab_callback())
+
+# hide/show menu tab content if clicked or not
+app.callback(
+    Output("timing_tab", "style"), [Input("menu_tab", "children")]
+)(generate_studies_content_tab_callback())
+
+# styles menu tab depending on if clicked or not
+app.callback(
+    Output("style_header", "style"),
+    [Input("menu_tab", "children")],
+    [State("style_header", "style")],
+)(generate_update_style_header_callback())
+
+# styles menu tab depending on if clicked or not
+app.callback(
+    Output("time_header", "style"),
+    [Input("menu_tab", "children")],
+    [State("time_header", "style")],
+)(generate_update_time_header_callback())
 
 #set live clock
 @app.callback(Output("live_clock", "children"), [Input("interval", "n_intervals")])
@@ -413,9 +460,11 @@ def get_indice_informations(selected_indice):
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
                Input('my-date-picker-range', 'start_date'),
-               Input('my-date-picker-range', 'end_date')],
+               Input('my-date-picker-range', 'end_date'),
+               Input('chart_type', 'value'),
+               Input('timing', 'value')],
               events=[Event('graph-update', 'interval')])
-def update_graph_scatter(input_data, start_date, end_date):
+def update_graph_scatter(input_data, start_date, end_date, chart_type, timing):
     try:
         mng_client = MongoClient(HOST)
         mng_db = mng_client[DATABASE]
@@ -462,14 +511,27 @@ def update_graph_scatter(input_data, start_date, end_date):
         df_mock['last'] = df_mock['last'].round(4)
         df_ind['last'] = df_ind['last'].round(4)
 
-        trace_ind = go.Scatter(
-            x=df_ind['time'],
-            y=df_ind['last'],
-            mode='lines',
-            line=dict(color='#28a745'),
-            name=input_data,
-            # opacity=0.8
-        )
+        if (chart_type == 'line_trace'):
+            trace_ind = go.Scatter(
+                x=df_ind['time'],
+                y=df_ind['last'],
+                mode='lines',
+                line=dict(color='#28a745'),
+                name=input_data,
+                # opacity=0.8
+            )
+        elif (chart_type == 'candlestick_trace'):
+            trace_ind = go.Candlestick(
+                x=df_ind["time"],
+                open=df_ind["open"],
+                high=df_ind["high"],
+                low=df_ind["low"],
+                close=df_ind["close"],
+                increasing=dict(line=dict(color="#00ff00")),
+                decreasing=dict(line=dict(color="white")),
+                showlegend=False,
+                name="candlestick",
+            )
 
         trace_mock = go.Scatter(
             x=df_mock['time'],
