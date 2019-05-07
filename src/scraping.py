@@ -189,7 +189,7 @@ class WebScraping:
 				self.organize_data()
 				start = time.time()
 
-	def parse_historical_data_response(self, response, ticket_name):
+	def parse_historical_data_response(self, response, ticket):
 		"""
 		To parse html doc into list of dict
 		:param ticket_name: to pass ticket's name to data
@@ -204,7 +204,8 @@ class WebScraping:
 			lst_col = row.find_all('td')
 			dct_row = dict(
 				date=self.convert_date(lst_col[0].text),
-				name=ticket_name,
+				name=ticket['name'],
+				ticket=ticket['ticket'],
 				close=self.convert_number(lst_col[1].text),
 				open=self.convert_number(lst_col[2].text),
 				high=self.convert_number(lst_col[3].text),
@@ -240,5 +241,5 @@ class WebScraping:
 			payload['smlID'] = ticket['smlID']
 			payload['header'] = ticket['header']
 			response = requests.post(AJAX_URL, data=payload, headers=urlheader)
-			lst_data = self.parse_historical_data_response(response.content, ticket_name=ticket['name'])
+			lst_data = self.parse_historical_data_response(response.content, ticket=ticket)
 			historical_data_coll.insert_many(lst_data)
