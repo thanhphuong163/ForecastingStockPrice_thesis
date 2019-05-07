@@ -205,7 +205,7 @@ class WebScraping:
 			dct_row = dict(
 				date=self.convert_date(lst_col[0].text),
 				name=ticket_name,
-				price=self.convert_number(lst_col[1].text),
+				close=self.convert_number(lst_col[1].text),
 				open=self.convert_number(lst_col[2].text),
 				high=self.convert_number(lst_col[3].text),
 				low=self.convert_number(lst_col[4].text),
