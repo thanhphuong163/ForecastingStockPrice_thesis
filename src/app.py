@@ -13,7 +13,9 @@ from settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_opti
 
 Stock_name = INDICES_LST
 
-timing = []
+timing = [
+
+]
 
 model = ["ARIMA", "CNN", "HYBRID", "LSTM"]
 
@@ -209,7 +211,7 @@ def chart_div():
                         },
                     ),
                     html.Span(
-                        "Time",
+                        "Studies",
                         id="time_header",
                         n_clicks_timestamp=1,
                         style={
@@ -235,16 +237,15 @@ def chart_div():
                         style={"textAlign": "left", "display": "block", 'marginLeft': '2px'},
                     ),
                     html.Div(
-                        dcc.RadioItems(
+                        dcc.Checklist(
                             id="timing",
                             options=[
-                                {'label': '1 day', 'value': 'day'},
-                                {'label': '1 week', 'value': 'week'},
-                                {'label': '1 month', 'value': 'month'},
-                                {'label': '1 year', 'value': 'year'},
+                                {'label': 'Bollinger bands', 'value': 'bollinger_trace'},
+                                {'label': 'MA', 'value': 'moving_average_trace'},
+                                {'label': 'Pivot points', 'value': 'pp_trace'},
                                 {'label': 'all', 'value': 'all'},
                             ],
-                            value='all',
+                            values=[],
                             style={"color": "white", "marginTop": "30px", },
                             labelStyle={'display': 'block', 'marginLeft': '2px'}
                         ),
@@ -467,7 +468,7 @@ app.layout = html.Div(
                     "Analyze",
                     id="button_chart",
                     n_clicks=0,
-                    style={"margin": "auto", "marginTop": "20px", "marginLeft": "-10px"}
+                    style={"margin": "auto", "marginTop": "20px", "marginLeft": "-10px", "borderRadius": "10px"}
                 )
             ],
             style={"backgroundColor": "#18252e", "padding": "20px"},
@@ -636,9 +637,9 @@ def get_indice_informations(selected_indice):
                # Input('my-date-picker-range', 'start_date'),
                # Input('my-date-picker-range', 'end_date'),
                Input('chart_type', 'value'),
-               Input('timing', 'value')],
+               Input('timing', 'values')],
               events=[Event('graph-update', 'interval')])
-def update_graph_scatter(input_data, chart_type, timing):
+def update_graph_scatter(input_data, chart_type, time):
     try:
         mng_client = MongoClient(HOST)
         mng_db = mng_client[DATABASE]

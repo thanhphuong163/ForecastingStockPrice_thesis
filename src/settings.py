@@ -23,7 +23,7 @@ MockColl = 'MockCollection'
 
 # Indice options
 Indice_options = {
-    'VN 30 (VNI30)': ['ROS', 'TCB', 'HPG'],
+    'VN 30 (VNI30)': ['ACB', 'VCS', 'BVS'],
     'HNX 30 (HNX30)': ['SHB', 'ACB', 'HUT']
 }
 
