@@ -1,5 +1,4 @@
 from datetime import datetime as dt
-from datetime import timezone
 
 import dash
 import dash_core_components as dcc
@@ -10,8 +9,13 @@ import pymongo
 from dash.dependencies import Output, Input, Event, State
 from plotly import tools
 from pymongo import MongoClient
-from settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options
+from settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options, History_data
 
+Stock_name = INDICES_LST
+
+timing = []
+
+model = ["ARIMA", "CNN", "HYBRID", "LSTM"]
 
 def _parseTime(date_time_str):
     date_time_obj = dt.strptime(date_time_str, '%b %d, %Y')
@@ -75,6 +79,24 @@ def generate_update_style_header_callback():
     return style_header
 
 
+# open modal
+def generate_modal_open_callback():
+    def open_modal(n):
+        if n > 0:
+            return {"display": "block"}
+        else:
+            return {"display": "none"}
+
+    return open_modal
+
+
+# close modal
+def generate_modal_close_callback():
+    def close_modal(n, n2):
+        return 0
+
+    return close_modal
+
 # line
 def line_trace(df):
     trace = go.Scatter(
@@ -96,10 +118,6 @@ def candlestick_trace(df):
         showlegend=False,
         name="candlestick",
     )
-
-Stock_name = INDICES_LST
-
-timing = []
 
 external_stylesheets = [
     "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
@@ -245,7 +263,7 @@ def chart_div():
                     "height": "100%",
                     "position": "absolute",
                     "left": "0",
-                    "top": "27px",
+                    "top": "20px",
                 },
             ),
             html.Div(
@@ -283,6 +301,135 @@ def chart_div():
         }
     )
 
+
+# modal
+def modal():
+    return html.Div(
+        html.Div(
+            [
+                html.Div(
+                    [
+                        html.Span(
+                            "x",
+                            id="closeModal",
+                            n_clicks=0,
+                            style={
+                                "float": "right",
+                                "cursor": "pointer",
+                                "marginTop": "0",
+                                "marginBottom": "10",
+                                "position": "relative",
+                                "left": "730px",
+                                "bottom": "22px",
+                            }
+                        ),
+                        html.Span(
+                            "SELECT PARAMETERS",
+                            id="modal_parameter",
+                            style={
+                                "marginBottom": "10px",
+                                "color": "#45df7e",
+                            }
+                        ),
+                        # row div with 2 div
+                        html.Div(
+                            [
+                                html.Div(
+                                    [
+                                        html.P(
+                                            "Time",
+                                            style={
+                                                "color": "white",
+                                                "marginBottom": "0",
+                                            }
+                                        ),
+                                        dcc.Dropdown(
+                                            id='select_time',
+                                            options=[
+                                                {"label": "1 day", "value": "day"},
+                                                {"label": "1 week", "value": "week"},
+                                                {"label": "1 month", "value": "month"},
+                                                {"label": "1 year", "value": "year"},
+                                            ],
+                                            value="day",
+                                            style={
+                                                "backgroundColor": "#18252E",
+                                                "color": "white",
+                                                "borderColor": "rgba(68,149,209,.9)",
+                                                "width": "50%",
+                                                "marginTop": "5px"
+                                            }
+                                        )
+                                    ],
+                                    id="left_div",
+                                    className="six columns",
+                                    style={
+                                        "paddingLeft": "15px"
+                                    }
+                                ),
+                                html.Div(
+                                    [
+                                        html.P(
+                                            "Model",
+                                            style={
+                                                "color": "white",
+                                                "marginBottom": "0",
+                                            }
+                                        ),
+                                        dcc.RadioItems(
+                                            id="select_model",
+                                            options=[
+                                                {"label": i, "value": i} for i in model
+                                            ],
+                                            labelStyle={
+                                                "display": "inline-block",
+                                                "marginRight": "10px"
+                                            },
+                                            style={
+                                                "marginTop": "5px"
+                                            }
+                                        )
+                                    ],
+                                    id="right_div",
+                                    className="six columns",
+                                )
+                            ],
+                            className="row",
+                        ),
+                        html.Div(
+                            html.Button(
+                                "Accept",
+                                id="accept",
+                                n_clicks=0,
+                                style={
+                                    "borderRadius": "10px"
+                                }
+                            ),
+                            style={"textAlign": "center", "marginTop": "20px", }
+                        )
+                    ],
+                    className="modal-content",
+                    style={
+                        "backgroundColor": "#18252E",
+                        "width": "50%",
+                        "border": "3px solid rgba(68,149,209,.9)",
+                        "borderRadius": "10px",
+                        "padding": "20px",
+                        "margin": "5% auto",
+                        "position": "fixed",
+                        "zIndex": "1000",
+                        "left": "0",
+                        "right": "0"
+
+                    }
+                )
+            ],
+        ),
+        id="modal_div",
+        className="modal",
+        style={"display": "none", "backgroundColor": "#18252E"}
+    )
+
 app.layout = html.Div(
     [
         dcc.Interval(id="interval", interval=1 * 1000, n_intervals=0),
@@ -299,14 +446,14 @@ app.layout = html.Div(
                         dcc.Dropdown(
                             id='indice-component',
                         ),
-                        dcc.DatePickerRange(
-                            id='my-date-picker-range',
-                            min_date_allowed=dt(1995, 8, 5),
-                            max_date_allowed=dt.now(),
-                            initial_visible_month=dt(2019, 3, 1),
-                            end_date=dt(2019, 3, 21),
-                            updatemode='bothdates'
-                        ),
+                        # dcc.DatePickerRange(
+                        #     id='my-date-picker-range',
+                        #     min_date_allowed=dt(1995, 8, 5),
+                        #     max_date_allowed=dt.now(),
+                        #     initial_visible_month=dt(2019, 3, 1),
+                        #     end_date=dt(2019, 3, 21),
+                        #     updatemode='bothdates'
+                        # ),
                         html.Div(
                             id='indice-information',
                         ),
@@ -315,6 +462,12 @@ app.layout = html.Div(
                             interval=1 * 20000
                         )
                     ],
+                ),
+                html.Button(
+                    "Analyze",
+                    id="button_chart",
+                    n_clicks=0,
+                    style={"margin": "auto", "marginTop": "20px", "marginLeft": "-10px"}
                 )
             ],
             style={"backgroundColor": "#18252e", "padding": "20px"},
@@ -326,7 +479,7 @@ app.layout = html.Div(
             id="charts",
             className="nine columns",
         ),
-        # html.Div(id='output', className='nine columns', style={'float': 'right'}),
+        html.Div([modal()])
     ],
     style={"paddingTop": "15px", "backgroundColor": "#1a2d46", "height": "100vh"}
 )
@@ -387,12 +540,33 @@ def update_time(t):
     return dt.now().strftime("%H:%M:%S")
 
 
+#component options of selected indice
 @app.callback((Output("indice-component", "options")), [Input("input", "value")])
 def set_indice_options(selected_indice):
     return [{'label': i, 'value': i} for i in Indice_options[selected_indice]]
 
 
-# @app.callback()
+# open or close modal
+@app.callback(
+    Output("modal_div", "style"),
+    [
+        Input("button_chart", "n_clicks"),
+        Input("closeModal", "n_clicks"),
+        Input("accept", "n_clicks")
+    ],
+    [
+        State("modal_div", "style")
+    ]
+)
+def generate_modal_open_callback(n, n2, n3, style):
+    if n == 0:
+        return {"display": "none"}
+    if style['display'] == "block":
+        return {"display": "none"}
+    else:
+        return {"display": "block"}
+
+
 
 #indice information
 @app.callback((Output("indice-information", "children")), [Input("input", "value")])
@@ -459,62 +633,45 @@ def get_indice_informations(selected_indice):
 
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
-               Input('my-date-picker-range', 'start_date'),
-               Input('my-date-picker-range', 'end_date'),
+               # Input('my-date-picker-range', 'start_date'),
+               # Input('my-date-picker-range', 'end_date'),
                Input('chart_type', 'value'),
                Input('timing', 'value')],
               events=[Event('graph-update', 'interval')])
-def update_graph_scatter(input_data, start_date, end_date, chart_type, timing):
+def update_graph_scatter(input_data, chart_type, timing):
     try:
         mng_client = MongoClient(HOST)
         mng_db = mng_client[DATABASE]
         db_cm_ind = mng_db[IndColl]
         db_cm_mock = mng_db[MockColl]
-
-        if start_date is not None:
-            start_date = dt.strptime(start_date, '%Y-%m-%d')
-            start_date = float(start_date.replace(tzinfo=timezone.utc).timestamp())
-        if end_date is not None:
-            end_date = dt.strptime(end_date, '%Y-%m-%d')
-            end_date = float(end_date.replace(tzinfo=timezone.utc).timestamp())
-
-        if start_date is not None and end_date is not None:
-            df_mock = pd.DataFrame(list(db_cm_mock.find(
-                {
-                    "$and": [
-                        {},
-                        {
-                            "time":
-                                {
-                                    "$gt": start_date,
-                                    "$lt": end_date
-                                },
-                        }
-                    ]
-                })))
-        else:
-            df_mock = pd.DataFrame(list(db_cm_mock.find(
-                {}
-            )))
+        db_cm_history = mng_db[History_data]
+        # if start_date is not None:
+        #     start_date = dt.strptime(start_date, '%Y-%m-%d')
+        #     start_date = float(start_date.replace(tzinfo=timezone.utc).timestamp())
+        # if end_date is not None:
+        #     end_date = dt.strptime(end_date, '%Y-%m-%d')
+        #     end_date = float(end_date.replace(tzinfo=timezone.utc).timestamp())
 
         df_ind = pd.DataFrame(list(db_cm_ind.find(
             {
                 "name": input_data
             }
         )))
-        df_mock = df_mock.rename(columns=lambda x: x.strip())
-        df_mock['time'] = df_mock['time'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
+        df_history = pd.DataFrame(list(db_cm_history.find(
+            {
+                "name": "VN 30"
+            }
+        )))
         df_ind['time'] = df_ind['time'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
 
-        df_mock = df_mock.sort_values(by=['time'])
         df_ind = df_ind.sort_values(by=['time'])
-        df_mock['last'] = df_mock['last'].round(4)
+        df_history = df_history.sort_values(by=['date'])
         df_ind['last'] = df_ind['last'].round(4)
 
         if (chart_type == 'line_trace'):
             trace_ind = go.Scatter(
-                x=df_ind['time'],
-                y=df_ind['last'],
+                x=df_history['date'],
+                y=df_history['close'],
                 mode='lines',
                 line=dict(color='#28a745'),
                 name=input_data,
@@ -522,36 +679,72 @@ def update_graph_scatter(input_data, start_date, end_date, chart_type, timing):
             )
         elif (chart_type == 'candlestick_trace'):
             trace_ind = go.Candlestick(
-                x=df_ind["time"],
-                open=df_ind["open"],
-                high=df_ind["high"],
-                low=df_ind["low"],
-                close=df_ind["close"],
+                x=df_history["date"],
+                open=df_history["open"],
+                high=df_history["high"],
+                low=df_history["low"],
+                close=df_history["close"],
                 increasing=dict(line=dict(color="#00ff00")),
                 decreasing=dict(line=dict(color="white")),
-                showlegend=False,
-                name="candlestick",
+                name=input_data,
             )
 
         trace_mock = go.Scatter(
-            x=df_mock['time'],
-            y=df_mock['last'],
+            x=df_ind['time'],
+            y=df_ind['last'],
             mode='lines',
             line=dict(color='#4f94c4'),
             name=input_data,
-            opacity=0.8
+            opacity=0.8,
         )
-        rows = 1
+        rows = 2
         figure = tools.make_subplots(rows=rows,
-                                     cols=2,
-                                     shared_yaxes=True,
-                                     print_grid=False)
+                                     cols=1,
+                                     # shared_xaxes=True,
+                                     print_grid=False,
+                                     subplot_titles=("History Data", "Real-time Data"))
 
         figure.append_trace(trace_ind, 1, 1)
-        figure.append_trace(trace_mock, 1, 2)
+        figure.append_trace(trace_mock, 2, 1)
         figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 5}
+        figure['layout']['xaxis'].update(title='1', showgrid=False)
+        figure['layout']['yaxis'].update(title='2', showgrid=False)
         figure['layout'].update(title=input_data, paper_bgcolor="#18252E", plot_bgcolor="#18252E")
-
+        figure['layout']['xaxis'] = dict(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1,
+                         label='1d',
+                         step='day',
+                         stepmode='backward'),
+                    dict(count=7,
+                         label='1w',
+                         step='day',
+                         stepmode='backward'),
+                    dict(count=1,
+                         label='1m',
+                         step='month',
+                         stepmode='backward'),
+                    dict(count=6,
+                         label='6m',
+                         step='month',
+                         stepmode='backward'),
+                    dict(count=1,
+                         label='1y',
+                         step='year',
+                         stepmode='backward'),
+                    dict(step='all')
+                ]),
+                font=dict(family='Arial',
+                          size=10),
+                bgcolor='white',
+                activecolor='#ffc107'
+            ),
+            rangeslider=dict(
+                visible=False
+            ),
+            type='date'
+        )
         return dcc.Graph(
             id='example-graph',
             figure=figure
