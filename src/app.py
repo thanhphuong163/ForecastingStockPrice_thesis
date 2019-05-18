@@ -513,44 +513,68 @@ def modal():
 app.layout = html.Div(
     [
         dcc.Interval(id="interval", interval=1 * 1000, n_intervals=0),
+
         html.Div(
             [
-                get_header(),
                 html.Div(
                     [
-                        dcc.Dropdown(
-                            id='input',
-                            options=[{'label': i, 'value': i} for i in Indice_options.keys()],
-                            value='VN 30 (VNI30)'
-                        ),
-                        dcc.Dropdown(
-                            id='indice-component',
-                        ),
-                        # dcc.DatePickerRange(
-                        #     id='my-date-picker-range',
-                        #     min_date_allowed=dt(1995, 8, 5),
-                        #     max_date_allowed=dt.now(),
-                        #     initial_visible_month=dt(2019, 3, 1),
-                        #     end_date=dt(2019, 3, 21),
-                        #     updatemode='bothdates'
-                        # ),
+                        get_header(),
                         html.Div(
-                            id='indice-information',
+                            [
+                                dcc.Dropdown(
+                                    id='input',
+                                    options=[{'label': i, 'value': i} for i in Indice_options.keys()],
+                                    value='VN 30 (VNI30)'
+                                ),
+                                dcc.Dropdown(
+                                    id='indice-component',
+                                ),
+                                # dcc.DatePickerRange(
+                                #     id='my-date-picker-range',
+                                #     min_date_allowed=dt(1995, 8, 5),
+                                #     max_date_allowed=dt.now(),
+                                #     initial_visible_month=dt(2019, 3, 1),
+                                #     end_date=dt(2019, 3, 21),
+                                #     updatemode='bothdates'
+                                # ),
+                                html.Div(
+                                    id='indice-information',
+                                ),
+                                dcc.Interval(
+                                    id='graph-update',
+                                    interval=1 * 20000
+                                )
+                            ],
                         ),
-                        dcc.Interval(
-                            id='graph-update',
-                            interval=1 * 20000
-                        )
                     ],
+                    style={"float": "left", "backgroundColor": "#18252e", "padding": "20px",
+                           "border": "1px solid rgba(68, 149, 209, 0.9)", "width": "312px"},
                 ),
-                html.Button(
-                    "Analyze",
-                    id="button_chart",
-                    n_clicks=0,
-                    style={"margin": "auto", "marginTop": "20px", "marginLeft": "-10px", "borderRadius": "10px"}
-                )
+                html.Div(
+                    [
+                        html.Div(
+                            [
+                                html.Button(
+                                    "Update database",
+                                    id="button_chart_crawl",
+                                    n_clicks=0,
+                                    style={"padding": "0 75px", "margin": "auto", "borderRadius": "10px"}
+                                ),
+
+                                html.Button(
+                                    "Analyze time series",
+                                    id="button_chart",
+                                    n_clicks=0,
+                                    style={"padding": "0 66px", "margin": "auto", "marginTop": "10px",
+                                           "borderRadius": "10px"}
+                                )
+                            ]
+                        ),
+                    ],
+                    style={"float": "left", "backgroundColor": "#18252e", "padding": "20px", "marginTop": "20px",
+                           "border": "1px solid rgba(68, 149, 209, 0.9)"},
+                ),
             ],
-            style={"backgroundColor": "#18252e", "padding": "20px", "border": "1px solid rgba(68, 149, 209, 0.9)"},
             className='three columns selection',
         ),
         html.Div(
@@ -773,7 +797,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                 y=df_history['close'],
                 mode='lines',
                 line=dict(color='#4f94c4'),
-                fill="toself",
+                fill="tozeroy",
                 name="history data",
             )
         elif (chart_type == 'candlestick_trace'):
