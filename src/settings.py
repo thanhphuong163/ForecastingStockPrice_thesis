@@ -23,7 +23,27 @@ MockColl = 'MockCollection'
 
 # Indice options
 Indice_options = {
-    'VN 30 (VNI30)': ['ACB', 'VCS', 'BVS'],
+    'VN 30 (VNI30)': [
+        'ACB', 'Advanced Compound Stone JSC',
+        'Baoviet Securities Company',
+        'Bim Son Cement JSC',
+        'CEO Group JSC',
+        'Cotec Construction JSC',
+        'DANANG HOUSING',
+        'DHG Pharmaceutical JSC',
+        'Dabaco',
+        'Dai Chau JSC',
+        'Danang Airport Services JSC',
+        'Ducgiang Chemicals Detergent Powder',
+        'FPT Corp',
+        'Faros Construction',
+        'Gemadept Corp',
+        'HOANG HA JSC',
+        'HUD - TASCO',
+        'Ho Chi Minh City Develop',
+        'Ho Chi Minh City Infrastructure Inv',
+        'Hoa Phat Group JSC'
+    ],
     'HNX 30 (HNX30)': ['SHB', 'ACB', 'HUT']
 }
 

@@ -9,7 +9,7 @@ import pymongo
 from dash.dependencies import Output, Input, Event, State
 from plotly import tools
 from pymongo import MongoClient
-from settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options, History_data
+from settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options, History_data, CompoColl
 
 Stock_name = INDICES_LST
 
@@ -26,6 +26,81 @@ def _parseTime(date_time_str):
 def convert_data(df):
     df['Date'] = df['Date'].apply(lambda x: _parseTime(x))
 
+
+#######STUDIES TRACES######
+
+# Moving average
+def moving_average_trace(df, fig):
+    price = df['close'].rolling(window=5).mean()
+    trace = go.Scatter(
+        x=df['date'], y=price, mode="lines", showlegend=False, name="MA"
+    )
+    fig.append_trace(trace, 1, 1)  # plot in first row
+    return fig
+
+
+# Exponential moving average
+def e_moving_average_trace(df, fig):
+    price = df['close'].rolling(window=20).mean()
+    trace = go.Scatter(
+        x=df['date'], y=price, mode="lines", showlegend=False, name="EMA"
+    )
+    fig.append_trace(trace, 1, 1)  # plot in first row
+    return fig
+
+
+# Bollinger Bands
+def bollinger_trace(df, fig, window_size=10, num_of_std=5):
+    price = df["close"]
+    rolling_mean = price.rolling(window=window_size).mean()
+    rolling_std = price.rolling(window=window_size).std()
+    upper_band = rolling_mean + (rolling_std * num_of_std)
+    lower_band = rolling_mean - (rolling_std * num_of_std)
+
+    trace = go.Scatter(
+        x=df["date"], y=upper_band, mode="lines", showlegend=False, name="BB_upper", line=dict(color='#a2a2a2'),
+        opacity=0.5
+    )
+
+    trace2 = go.Scatter(
+        x=df["date"], y=rolling_mean, mode="lines", showlegend=False, name="BB_mean", opacity=0.5
+    )
+
+    trace3 = go.Scatter(
+        x=df["date"], y=lower_band, mode="lines", showlegend=False, name="BB_lower", line=dict(color='#a2a2a2'),
+        opacity=0.5
+    )
+
+    fig.append_trace(trace, 1, 1)  # plot in first row
+    fig.append_trace(trace2, 1, 1)  # plot in first row
+    fig.append_trace(trace3, 1, 1)  # plot in first row
+    return fig
+
+
+# Pivot points
+def pp_trace(df, fig):
+    PP = pd.Series((df["high"] + df["low"] + df["close"]) / 3)
+    R1 = pd.Series(2 * PP - df["low"])
+    S1 = pd.Series(2 * PP - df["high"])
+    R2 = pd.Series(PP + df["high"] - df["low"])
+    S2 = pd.Series(PP - df["high"] + df["low"])
+    R3 = pd.Series(df["high"] + 2 * (PP - df["low"]))
+    S3 = pd.Series(df["low"] - 2 * (df["high"] - PP))
+    trace = go.Scatter(x=df.index, y=PP, mode="lines", showlegend=False, name="PP")
+    trace1 = go.Scatter(x=df.index, y=R1, mode="lines", showlegend=False, name="R1")
+    trace2 = go.Scatter(x=df.index, y=S1, mode="lines", showlegend=False, name="S1")
+    trace3 = go.Scatter(x=df.index, y=R2, mode="lines", showlegend=False, name="R2")
+    trace4 = go.Scatter(x=df.index, y=S2, mode="lines", showlegend=False, name="S2")
+    trace5 = go.Scatter(x=df.index, y=R3, mode="lines", showlegend=False, name="R3")
+    trace6 = go.Scatter(x=df.index, y=S3, mode="lines", showlegend=False, name="S3")
+    fig.append_trace(trace, 1, 1)
+    fig.append_trace(trace1, 1, 1)
+    fig.append_trace(trace2, 1, 1)
+    fig.append_trace(trace3, 1, 1)
+    fig.append_trace(trace4, 1, 1)
+    fig.append_trace(trace5, 1, 1)
+    fig.append_trace(trace6, 1, 1)
+    return fig
 
 # updates hidden div that stores the last clicked menu tab
 def generate_active_menu_tab_callback():
@@ -228,6 +303,7 @@ def chart_div():
                             options=[
                                 {"label": "candlestick", "value": "candlestick_trace"},
                                 {"label": "line", "value": "line_trace"},
+                                {"label": "mountain", "value": "mountain_trace"}
                             ],
                             value="line_trace",
                             style={"color": "white", "marginTop": "30px", },
@@ -242,8 +318,8 @@ def chart_div():
                             options=[
                                 {'label': 'Bollinger bands', 'value': 'bollinger_trace'},
                                 {'label': 'MA', 'value': 'moving_average_trace'},
-                                {'label': 'Pivot points', 'value': 'pp_trace'},
-                                {'label': 'all', 'value': 'all'},
+                                # {'label': 'Pivot points', 'value': 'pp_trace'},
+                                {"label": "EMA", "value": "e_moving_average_trace"},
                             ],
                             values=[],
                             style={"color": "white", "marginTop": "30px", },
@@ -260,8 +336,8 @@ def chart_div():
                     "borderRight": "1px solid" + "rgba(68,149,209,.9)",
                     "backgroundImage": "-webkit-linear-gradient(top,#18252e,#2a516e 63%)",
                     "zIndex": "20",
-                    "width": "45%",
-                    "height": "100%",
+                    "width": "25%",
+                    "height": "45%",
                     "position": "absolute",
                     "left": "0",
                     "top": "20px",
@@ -291,7 +367,9 @@ def chart_div():
             ),
 
             # Graph div
-            html.Div(id='output'),
+            html.Div(
+                id='output',
+            ),
         ],
         style={
             "position": "relative",
@@ -299,6 +377,7 @@ def chart_div():
             "borderColor": "rgba(68,149,209,.9)",
             "overflow": "hidden",
             "marginBottom": "2px",
+            "height": "600px"
         }
     )
 
@@ -471,7 +550,7 @@ app.layout = html.Div(
                     style={"margin": "auto", "marginTop": "20px", "marginLeft": "-10px", "borderRadius": "10px"}
                 )
             ],
-            style={"backgroundColor": "#18252e", "padding": "20px"},
+            style={"backgroundColor": "#18252e", "padding": "20px", "border": "1px solid rgba(68, 149, 209, 0.9)"},
             className='three columns selection',
         ),
         html.Div(
@@ -482,7 +561,8 @@ app.layout = html.Div(
         ),
         html.Div([modal()])
     ],
-    style={"paddingTop": "15px", "backgroundColor": "#1a2d46", "height": "100vh"}
+    style={"paddingTop": "15px", "backgroundColor": "#1a2d46", "height": "100vh", "overflow": "auto",
+           "display": "block"}
 )
 
 
@@ -634,24 +714,27 @@ def get_indice_informations(selected_indice):
 
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
+               Input('indice-component', 'value'),
                # Input('my-date-picker-range', 'start_date'),
                # Input('my-date-picker-range', 'end_date'),
                Input('chart_type', 'value'),
                Input('timing', 'values')],
               events=[Event('graph-update', 'interval')])
-def update_graph_scatter(input_data, chart_type, time):
+def update_graph_scatter(input_data, input_data_component, chart_type, studies):
     try:
         mng_client = MongoClient(HOST)
         mng_db = mng_client[DATABASE]
         db_cm_ind = mng_db[IndColl]
         db_cm_mock = mng_db[MockColl]
         db_cm_history = mng_db[History_data]
+        db_cm_component = mng_db[CompoColl]
         # if start_date is not None:
         #     start_date = dt.strptime(start_date, '%Y-%m-%d')
         #     start_date = float(start_date.replace(tzinfo=timezone.utc).timestamp())
         # if end_date is not None:
         #     end_date = dt.strptime(end_date, '%Y-%m-%d')
         #     end_date = float(end_date.replace(tzinfo=timezone.utc).timestamp())
+
 
         df_ind = pd.DataFrame(list(db_cm_ind.find(
             {
@@ -663,6 +746,13 @@ def update_graph_scatter(input_data, chart_type, time):
                 "name": "VN 30"
             }
         )))
+
+        df_history_component = pd.DataFrame(list(db_cm_component.find(
+            {
+                "name": input_data_component
+            }
+        )))
+
         df_ind['time'] = df_ind['time'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
 
         df_ind = df_ind.sort_values(by=['time'])
@@ -674,9 +764,17 @@ def update_graph_scatter(input_data, chart_type, time):
                 x=df_history['date'],
                 y=df_history['close'],
                 mode='lines',
-                line=dict(color='#28a745'),
-                name=input_data,
-                # opacity=0.8
+                line=dict(color='#4f94c4'),
+                name="history data",
+            )
+        elif (chart_type == 'mountain_trace'):
+            trace_ind = go.Scatter(
+                x=df_history['date'],
+                y=df_history['close'],
+                mode='lines',
+                line=dict(color='#4f94c4'),
+                fill="toself",
+                name="history data",
             )
         elif (chart_type == 'candlestick_trace'):
             trace_ind = go.Candlestick(
@@ -687,23 +785,36 @@ def update_graph_scatter(input_data, chart_type, time):
                 close=df_history["close"],
                 increasing=dict(line=dict(color="#00ff00")),
                 decreasing=dict(line=dict(color="white")),
-                name=input_data,
+                name="history data",
             )
 
         trace_mock = go.Scatter(
             x=df_ind['time'],
             y=df_ind['last'],
             mode='lines',
-            line=dict(color='#4f94c4'),
-            name=input_data,
+            line=dict(color='#28a745'),
+            name="real-time data",
             opacity=0.8,
         )
+
         rows = 2
-        figure = tools.make_subplots(rows=rows,
-                                     cols=1,
-                                     # shared_xaxes=True,
-                                     print_grid=False,
-                                     subplot_titles=("History Data", "Real-time Data"))
+        figure = tools.make_subplots(
+            rows=rows,
+            cols=1,
+            print_grid=False,
+            # subplot_titles=("History Data", "Real-time Data")
+        )
+
+        if studies != []:
+            for study in studies:
+                if study == "bollinger_trace":
+                    figure = bollinger_trace(df_history, figure)
+                if study == "moving_average_trace":
+                    figure = moving_average_trace(df_history, figure)
+                if study == "e_moving_average_trace":
+                    figure = e_moving_average_trace(df_history, figure)
+                if study == "pp_trace":
+                    figure = pp_trace(df_history, figure)
 
         figure.append_trace(trace_ind, 1, 1)
         figure.append_trace(trace_mock, 2, 1)
@@ -711,6 +822,10 @@ def update_graph_scatter(input_data, chart_type, time):
         figure['layout']['xaxis'].update(title='1', showgrid=False)
         figure['layout']['yaxis'].update(title='2', showgrid=False)
         figure['layout'].update(title=input_data, paper_bgcolor="#18252E", plot_bgcolor="#18252E")
+        figure['layout']['yaxis'] = dict(
+            # range=[800, 1000],
+            domain=[0.55, 1]
+        )
         figure['layout']['xaxis'] = dict(
             rangeselector=dict(
                 buttons=list([
@@ -744,11 +859,14 @@ def update_graph_scatter(input_data, chart_type, time):
             rangeslider=dict(
                 visible=False
             ),
-            type='date'
+            type='date',
         )
         return dcc.Graph(
             id='example-graph',
-            figure=figure
+            figure=figure,
+            style={
+                "height": "579px"
+            }
         )
     except Exception as e:
         with open('errors.txt', 'a') as f:
