@@ -674,8 +674,12 @@ def generate_modal_open_callback(n, n2, n3, style):
 
 
 #indice information
-@app.callback((Output("indice-information", "children")), [Input("input", "value")])
-def get_indice_informations(selected_indice):
+@app.callback((Output("indice-information", "children")),
+              [
+                  Input("input", "value"),
+                  Input('indice-component', 'value'),
+              ])
+def get_indice_informations(selected_indice, indice_component):
     mng_client = MongoClient(HOST)
     mng_db = mng_client[DATABASE]
     db_cm_ind = mng_db[IndColl]
