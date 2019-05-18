@@ -192,7 +192,7 @@ class WebScraping:
 	def parse_historical_data_response(self, response, ticket):
 		"""
 		To parse html doc into list of dict
-		:param ticket_name: to pass ticket's name to data
+		:param ticket: to pass ticket's name to data
 		:param response: html doc
 		:return: list of dict
 		"""

@@ -2,18 +2,26 @@
   <dictionary name="ntphuong">
     <words>
       <w>aapl</w>
+      <w>arima</w>
       <w>arimamodel</w>
+      <w>confint</w>
       <w>dataframe</w>
       <w>dataframes</w>
       <w>ffill</w>
+      <w>insample</w>
       <w>mongo</w>
+      <w>nhan</w>
       <w>ntphuong</w>
+      <w>pacf</w>
       <w>petrovietnam</w>
       <w>phuongnt</w>
+      <w>pred</w>
       <w>prefs</w>
       <w>resample</w>
+      <w>scaler</w>
       <w>tbody</w>
       <w>urlheader</w>
+      <w>yhat</w>
     </words>
   </dictionary>
 </component>
