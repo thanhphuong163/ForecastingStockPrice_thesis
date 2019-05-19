@@ -47,10 +47,9 @@ class QueryData:
 		df['volume'] = data['volume'].resample(rule).sum().fillna(method='ffill')
 		return df
 
-	def get_list_ticket(self, index='VNI30'):
+	def get_list_ticket(self, index='VN 30 (VNI30)'):
 		his_data_coll = self.database[History_data]
 		cursor = his_data_coll.find({'index': {'$eq': index}})
 		df = pd.DataFrame(data=list(cursor))
-		df_ticket = df[['ticket', 'name']].drop_duplicates()
-		lst_ticket = list(df_ticket['name'])
+		lst_ticket = list(df['name'].drop_duplicates())
 		return lst_ticket

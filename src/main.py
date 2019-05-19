@@ -11,7 +11,6 @@ from src.config_tickets import ticket_lst
 from src.query_data import QueryData
 from src.scraping import WebScraping
 from src.settings import HOST
-from src.utilities import run_model
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
@@ -52,19 +51,20 @@ def get_historical_data():
 def demo():
 	start = datetime(2010, 1, 1)
 	client = connect_2_dbServer()
-	index = 'VNI30'
+	index = 'VN 30 (VNI30)'
 	query = QueryData(dbClient=client)
-	df_ticket = query.get_list_ticket(index)
-	lst_ticket = list(df_ticket['name'][:5])
+	lst_ticket = query.get_list_ticket(index)
 	print(lst_ticket)
-	df = query.get_historical_data(lst_ticket)
 
-	# closed_price = pd.DataFrame()
-	for ticket in lst_ticket:
-		# closed_price[ticket] = df[df.name == ticket]['close']
-		print(ticket)
-		time_series = df[df.name == ticket]['close']
-		run_model(time_series)
+
+# df = query.get_historical_data(lst_ticket)
+#
+# # closed_price = pd.DataFrame()
+# for ticket in lst_ticket:
+# 	# closed_price[ticket] = df[df.name == ticket]['close']
+# 	print(ticket)
+# 	time_series = df[df.name == ticket]['close']
+# 	run_model(time_series)
 
 
 # print(closed_price)
@@ -93,5 +93,5 @@ if __name__ == '__main__':
 	# query_data = QueryData(dbClient=client)
 	# lst_symbol = query_data.get_list_ticket()
 	# print(lst_symbol)
-	get_historical_data()
-# demo()
+	# get_historical_data()
+	demo()
