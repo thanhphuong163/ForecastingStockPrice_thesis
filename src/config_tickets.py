@@ -85,7 +85,7 @@ AJAX_URL = 'https://www.investing.com/instruments/HistoricalDataAjax'
 HIS_DATA_HEADERS = [
 	{
 		'name': 'VN 30',
-		'ticket': 'VNI30',
+		'ticket': 'VN 30 (VNI30)',
 		'index': 'HOSE',
 		'curr_id': '41064',
 		'smlID': '2058618',
@@ -102,7 +102,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Asia Commercial Bank',
 		'ticket': 'ACB',
-		'index': 'HNX30',
+		'index': 'HNX 30 (HNX30)',
 		'curr_id': '41913',
 		'smlID': '1286128',
 		'header': 'ACB Historical Data',
@@ -110,7 +110,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Advanced Compound Stone JSC',
 		'ticket': 'VCS',
-		'index': 'HNX30',
+		'index': 'HNX 30 (HNX30)',
 		'curr_id': '42260',
 		'smlID': '1292027',
 		'header': 'VCS Historical Data',
@@ -118,7 +118,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Baoviet Securities Company',
 		'ticket': 'BVS',
-		'index': 'HNX30',
+		'index': 'HNX 30 (HNX30)',
 		'curr_id': '41942',
 		'smlID': '1286621',
 		'header': 'BVS Historical Data',
@@ -126,7 +126,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Bim Son Cement',
 		'ticket': 'BCC',
-		'index': 'HNX30',
+		'index': 'HNX 30 (HNX30)',
 		'curr_id': '41928',
 		'smlID': '1286383',
 		'header': 'BCC Historical Data',
@@ -134,7 +134,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'DANANG HOUSING',
 		'ticket': 'NDN',
-		'index': 'HNX30',
+		'index': 'HNX 30 (HNX30)',
 		'curr_id': '42088',
 		'smlID': '1289103',
 		'header': 'NDN Historical Data',
@@ -142,7 +142,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Materials Transport Cement JSC',
 		'ticket': 'VTV',
-		'index': 'HNX30',
+		'index': 'HNX 30 (HNX30)',
 		'curr_id': '42292',
 		'smlID': '1292571',
 		'header': 'VTV Historical Data',
@@ -150,7 +150,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Petrovietnam Southern Gas JSC',
 		'ticket': 'PGS',
-		'index': 'HNX30',
+		'index': 'HNX 30 (HNX30)',
 		'curr_id': '42109',
 		'smlID': '1289460',
 		'header': 'PGS Historical Data',
@@ -158,7 +158,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Cotec Construction JSC',
 		'ticket': 'CTD',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958436',
 		'smlID': '1793483',
 		'header': 'CTD Historical Data',
@@ -166,7 +166,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'DHG Pharmaceutical JSC',
 		'ticket': 'DHG',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958449',
 		'smlID': '1793743',
 		'header': 'DHG Historical Data',
@@ -174,7 +174,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Faros Construction Corp',
 		'ticket': 'ROS',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '987188',
 		'smlID': '25082236',
 		'header': 'ROS Historical Data',
@@ -182,7 +182,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'FPT Corp',
 		'ticket': 'FPT',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958482',
 		'smlID': '1794403',
 		'header': 'FPT Historical Data',
@@ -190,7 +190,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Petrovietnam Southern Gas JSC',
 		'ticket': 'PGS',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '42109',
 		'smlID': '1289460',
 		'header': 'PGS Historical Data',
@@ -198,7 +198,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Gemadept Corp',
 		'ticket': 'GMD',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958488',
 		'smlID': '1794523',
 		'header': 'GMD Historical Data',
@@ -206,7 +206,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Ho Chi Minh City Infrastructure Investment JSC',
 		'ticket': 'CII',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958421',
 		'smlID': '1793183',
 		'header': 'CII Historical Data',
@@ -214,7 +214,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Ho Chi Minh City Development Joint Stock Commercial Bank',
 		'ticket': 'HDB',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '1057644',
 		'smlID': '25968832',
 		'header': 'HDB Historical Data',
@@ -222,7 +222,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Hoa Phat Group JSC',
 		'ticket': 'HPG',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958514',
 		'smlID': '1795043',
 		'header': 'HPG Historical Data',
@@ -230,7 +230,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Masan Group Corp',
 		'ticket': 'MSN',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958566',
 		'smlID': '1796083',
 		'header': 'MSN Historical Data',
@@ -238,7 +238,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Military Commercial Joint Stock Bank',
 		'ticket': 'MBB',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958561',
 		'smlID': '1795983',
 		'header': 'MBB Historical Data',
@@ -246,7 +246,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Mobile World Investment Corp',
 		'ticket': 'MWG',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958570',
 		'smlID': '1796163',
 		'header': 'MWG Historical Data',
@@ -254,7 +254,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'No Va Land Investment Group Corp',
 		'ticket': 'NVL',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '994755',
 		'smlID': '25209749',
 		'header': 'NVL Historical Data',
@@ -262,7 +262,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'PetroVietnam Fertilizer and Chemicals Corp',
 		'ticket': 'DPM',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958459',
 		'smlID': '1793943',
 		'header': 'DPM Historical Data',
@@ -270,7 +270,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Phu Nhuan Jewelry JSC',
 		'ticket': 'PNJ',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958607',
 		'smlID': '1796903',
 		'header': 'PNJ Historical Data',
@@ -278,7 +278,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Refrigeration Electrical Engineering Corp',
 		'ticket': 'REE',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958633',
 		'smlID': '1797423',
 		'header': 'REE Historical Data',
@@ -286,7 +286,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Sai Gon Thuong Tin Commercial Joint Stock Bank',
 		'ticket': 'STB',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958676',
 		'smlID': '1798283',
 		'header': 'STB Historical Data',
@@ -294,7 +294,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Saigon Beer Alcohol Beverage Corp',
 		'ticket': 'SAB',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '994073',
 		'smlID': '25200684',
 		'header': 'SAB Historical Data',
@@ -302,7 +302,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Saigon Securities Incorporation',
 		'ticket': 'SSI',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958674',
 		'smlID': '1798243',
 		'header': 'SSI Historical Data',
@@ -310,7 +310,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vietnam Technological And Commercial Joint Stock Bank',
 		'ticket': 'TCB',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '1081734',
 		'smlID': '27386382',
 		'header': 'TCB Historical Data',
@@ -318,7 +318,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Thanh Thanh Cong Tay Ninh JSC',
 		'ticket': 'SBT',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958641',
 		'smlID': '1797583',
 		'header': 'SBT Historical Data',
@@ -326,7 +326,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Joint Stock Commercial Bank for Foreign Trade of Vietnam',
 		'ticket': 'VCB',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958731',
 		'smlID': '1799383',
 		'header': 'VCB Historical Data',
@@ -334,7 +334,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vietjet Aviation JSC',
 		'ticket': 'VJC',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '997168',
 		'smlID': '25229983',
 		'header': 'VJC Historical Data',
@@ -342,7 +342,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vietnam Export Import Commercial Joint Stock Bank',
 		'ticket': 'EIB',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958472',
 		'smlID': '1794203',
 		'header': 'EIB Historical Data',
@@ -350,7 +350,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vietnam JSCmmercial Bank for Industry and Trade',
 		'ticket': 'CTG',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958437',
 		'smlID': '1793503',
 		'header': 'CTG Historical Data',
@@ -358,7 +358,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vietnam Prosperity Joint Stock Commercial Bank',
 		'ticket': 'VPB',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '1043364',
 		'smlID': '25808811',
 		'header': 'VPB Historical Data',
@@ -366,7 +366,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vietnam Dairy Products JSC',
 		'ticket': 'VNM',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958751',
 		'smlID': '1799783',
 		'header': 'VNM Historical Data',
@@ -374,7 +374,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vincom Retail JSC',
 		'ticket': 'VRE',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '1056075',
 		'smlID': '25958129',
 		'header': 'VRE Historical Data',
@@ -382,7 +382,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vingroup JSC',
 		'ticket': 'VIC',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958739',
 		'smlID': '1799543',
 		'header': 'VIC Historical Data',
@@ -390,7 +390,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Vinhomes JSC',
 		'ticket': 'VHM',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '1076910',
 		'smlID': '26672248',
 		'header': 'VHM Historical Data',
@@ -398,7 +398,7 @@ HIS_DATA_HEADERS = [
 	{
 		'name': 'Petrovietnam Gas JSC',
 		'ticket': 'GAS',
-		'index': 'VNI30',
+		'index': 'VN 30 (VNI30)',
 		'curr_id': '958483',
 		'smlID': '1794423',
 		'header': 'GAS Historical Data',
