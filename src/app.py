@@ -497,7 +497,8 @@ app.layout = html.Div(
                                 dcc.Dropdown(
                                     id='input',
                                     options=[{'label': i, 'value': i} for i in Indice_options.keys()],
-                                    value='VN 30 (VNI30)'
+	                                value='VN 30 (VNI30)',
+	                                style={"color": "white"}
                                 ),
                                 dcc.Dropdown(
                                     id='indice-component',
