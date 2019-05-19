@@ -54,7 +54,6 @@ def demo():
 	index = 'VN 30 (VNI30)'
 	query = QueryData(dbClient=client)
 	lst_ticket = query.get_list_ticket(index)
-	print(lst_ticket)
 
 
 # df = query.get_historical_data(lst_ticket)
@@ -83,15 +82,15 @@ def test():
 if __name__ == '__main__':
 	# start = datetime.today() - relativedelta(months=4)
 	# end = datetime.today()
-	print('Initialized.')
-	client = connect_2_dbServer()
-	driver_lst = request_2_website()
-	scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
-	scraper.start_scraping()
+	# print('Initialized.')
+	# client = connect_2_dbServer()
+	# driver_lst = request_2_website()
+	# scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
+	# scraper.start_scraping()
 	# scraper.scrape_historical_data(years=2)
-	print('Done.')
+	# print('Done.')
 	# query_data = QueryData(dbClient=client)
 	# lst_symbol = query_data.get_list_ticket()
 	# print(lst_symbol)
-# get_historical_data()
+	get_historical_data()
 # demo()

@@ -11,7 +11,7 @@ from plotly import tools
 from pymongo import MongoClient
 
 from src.query_data import QueryData
-from src.settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options, History_data, CompoColl
+from src.settings import DATABASE, IndColl, INDICES_LST, HOST, Indice_options, History_data, CompoColl
 from src.utilities import calculate_acf, calculate_pacf
 
 Stock_name = INDICES_LST
@@ -948,8 +948,8 @@ def get_indice_informations(selected_indice, indice_component):
     mng_client = MongoClient(HOST)
     mng_db = mng_client[DATABASE]
     db_cm_ind = mng_db[IndColl]
-    df_ind = pd.DataFrame(list(db_cm_ind.find({"name": selected_indice}).sort("time", pymongo.DESCENDING).limit(2)))
-    df_ind['time'] = df_ind['time'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
+    df_ind = pd.DataFrame(list(db_cm_ind.find({"name": selected_indice}).sort("date", pymongo.DESCENDING).limit(2)))
+    df_ind['date'] = df_ind['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
     last_price = str(df_ind['last'].values[0].round(2))
     return html.Div([
         html.P(
@@ -981,7 +981,7 @@ def get_indice_informations(selected_indice, indice_component):
         html.Div(
             [
                 html.P(
-                    df_ind['time'].values[0],
+                    df_ind['date'].values[0],
                     className="four columns",
                     style={"color": "white", "textAlign": "center", "fontSize": "10px", "textTransform": "uppercase",
                            "margin": "auto"}
@@ -1018,7 +1018,6 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
         mng_client = MongoClient(HOST)
         mng_db = mng_client[DATABASE]
         db_cm_ind = mng_db[IndColl]
-        db_cm_mock = mng_db[MockColl]
         db_cm_history = mng_db[History_data]
         db_cm_component = mng_db[CompoColl]
         # if start_date is not None:
@@ -1029,7 +1028,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
         #     end_date = float(end_date.replace(tzinfo=timezone.utc).timestamp())
 
         if input_data_component is not None:
-            df_ind = pd.DataFrame(list(db_cm_ind.find(
+            df_ind = pd.DataFrame(list(db_cm_component.find(
                 {
                     "name": input_data_component
                 }
@@ -1051,18 +1050,12 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                 }
             )))
 
-        df_history_component = pd.DataFrame(list(db_cm_component.find(
-            {
-                "name": input_data_component
-            }
-        )))
+        df_ind['date'] = df_ind['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
 
-        df_ind['time'] = df_ind['time'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
-
-        df_ind = df_ind.sort_values(by=['time'])
+        df_ind = df_ind.sort_values(by=['date'])
         df_history = df_history.sort_values(by=['date'])
         df_ind['last'] = df_ind['last'].round(4)
-
+        print(df_ind['date'])
         if (chart_type == 'line_trace'):
             trace_ind = go.Scatter(
                 x=df_history['date'],
@@ -1093,7 +1086,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
             )
 
         trace_mock = go.Scatter(
-            x=df_ind['time'],
+            x=df_ind['date'],
             y=df_ind['last'],
             mode='lines',
             line=dict(color='#28a745'),

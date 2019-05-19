@@ -1,15 +1,3 @@
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
-unconverted data remains:  17:00:00
 'date'
 'date'
 'date'
@@ -24,13 +12,5 @@ unconverted data remains:  17:00:00
 'date'
 'date'
 'date'
-'date'
-'date'
-'time'
-'time'
-'time'
-'date'
-'time'
-'time'
 'date'
 'date'
