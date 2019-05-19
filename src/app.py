@@ -9,7 +9,9 @@ import pymongo
 from dash.dependencies import Output, Input, Event, State
 from plotly import tools
 from pymongo import MongoClient
-from settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options, History_data, CompoColl
+
+from src.settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options, History_data, CompoColl
+from src.utilities import calculate_acf, calculate_pacf
 
 Stock_name = INDICES_LST
 
@@ -213,6 +215,29 @@ external_stylesheets = [
 app = dash.Dash(__name__,
                 external_stylesheets=external_stylesheets)
 
+app.config['suppress_callback_exceptions'] = True
+
+# CSS
+tabs_styles = {
+    'height': '44px'
+}
+tab_style = {
+    'padding': '6px',
+    'color': 'white',
+    'backgroundColor': 'rgb(24, 37, 46)',
+    'border': 'none'
+}
+
+tab_selected_style = {
+    'borderBottom': '2px solid gold',
+    'color': 'white',
+    'padding': '6px',
+    'fontWeight': 'bold',
+    'backgroundColor': 'rgb(24, 37, 46)',
+    'borderTop': 'none',
+    'borderLeft': 'none',
+    'borderRight': 'none'
+}
 
 # header app
 def get_header(t=dt.now()):
@@ -385,8 +410,9 @@ def chart_div():
 # modal
 def modal():
     return html.Div(
-        html.Div(
-            [
+        [
+            html.Div(
+                [
                 html.Div(
                     [
                         html.Span(
@@ -403,90 +429,36 @@ def modal():
                                 "bottom": "22px",
                             }
                         ),
-                        html.Span(
-                            "SELECT PARAMETERS",
-                            id="modal_parameter",
-                            style={
-                                "marginBottom": "10px",
-                                "color": "#45df7e",
-                            }
-                        ),
-                        # row div with 2 div
+
+                        dcc.Tabs(id="tabs", value='tab-analyze', children=[
+                            dcc.Tab(label='ANALYZE', value='tab-analyze', style=tab_style,
+                                    selected_style=tab_selected_style),
+                            dcc.Tab(label='PREDICT', value='tab-predict', style=tab_style,
+                                    selected_style=tab_selected_style),
+                        ]),
+                        html.Div(id='tabs-content', style={'marginTop': '15px'}),
                         html.Div(
                             [
-                                html.Div(
-                                    [
-                                        html.P(
-                                            "Time",
-                                            style={
-                                                "color": "white",
-                                                "marginBottom": "0",
-                                            }
-                                        ),
-                                        dcc.Dropdown(
-                                            id='select_time',
-                                            options=[
-                                                {"label": "1 day", "value": "day"},
-                                                {"label": "1 week", "value": "week"},
-                                                {"label": "1 month", "value": "month"},
-                                                {"label": "1 year", "value": "year"},
-                                            ],
-                                            value="day",
-                                            style={
-                                                "backgroundColor": "#18252E",
-                                                "color": "white",
-                                                "borderColor": "rgba(68,149,209,.9)",
-                                                "width": "50%",
-                                                "marginTop": "5px"
-                                            }
-                                        )
-                                    ],
-                                    id="left_div",
-                                    className="six columns",
+                                html.Button(
+                                    "Analyze",
+                                    id="analyze_button",
+                                    n_clicks=0,
                                     style={
-                                        "paddingLeft": "15px"
+                                        "borderRadius": "10px",
+                                        "marginRight": "20px"
                                     }
                                 ),
-                                html.Div(
-                                    [
-                                        html.P(
-                                            "Model",
-                                            style={
-                                                "color": "white",
-                                                "marginBottom": "0",
-                                            }
-                                        ),
-                                        dcc.RadioItems(
-                                            id="select_model",
-                                            options=[
-                                                {"label": i, "value": i} for i in model
-                                            ],
-                                            labelStyle={
-                                                "display": "inline-block",
-                                                "marginRight": "10px"
-                                            },
-                                            style={
-                                                "marginTop": "5px"
-                                            }
-                                        )
-                                    ],
-                                    id="right_div",
-                                    className="six columns",
-                                )
+                                html.Button(
+                                    "Close",
+                                    id="accept",
+                                    n_clicks=0,
+                                    style={
+                                        "borderRadius": "10px"
+                                    }
+                                ),
                             ],
-                            className="row",
+                            style={"textAlign": "left", "margin": "auto", "marginTop": "20px"}
                         ),
-                        html.Div(
-                            html.Button(
-                                "Accept",
-                                id="accept",
-                                n_clicks=0,
-                                style={
-                                    "borderRadius": "10px"
-                                }
-                            ),
-                            style={"textAlign": "center", "marginTop": "20px", }
-                        )
                     ],
                     className="modal-content",
                     style={
@@ -504,7 +476,8 @@ def modal():
                     }
                 )
             ],
-        ),
+            )
+        ],
         id="modal_div",
         className="modal",
         style={"display": "none", "backgroundColor": "#18252E"}
@@ -672,13 +645,270 @@ def generate_modal_open_callback(n, n2, n3, style):
         return {"display": "block"}
 
 
+@app.callback(Output('tabs-content', 'children'),
+              [Input('tabs', 'value')])
+def render_content(tab):
+    if tab == 'tab-predict':
+        return html.Div([
+            html.Div(
+                [
+                    # row div with 2 div
+                    html.Div(
+                        [
+                            html.Span(
+                                "SELECT PARAMETERS",
+                                id="modal_parameter",
+                                style={
+                                    "marginBottom": "10px",
+                                    "color": "#45df7e",
+                                }
+                            ),
+                            html.P(
+                                "Time",
+                                style={
+                                    "color": "white",
+                                    "marginBottom": "0",
+                                }
+                            ),
+                            dcc.Dropdown(
+                                id='select_time',
+                                options=[
+                                    {"label": "1 day", "value": "day"},
+                                    {"label": "1 week", "value": "week"},
+                                    {"label": "1 month", "value": "month"},
+                                    {"label": "1 year", "value": "year"},
+                                ],
+                                value="day",
+                                style={
+                                    "backgroundColor": "#18252E",
+                                    "color": "white",
+                                    "borderColor": "rgba(68,149,209,.9)",
+                                    "width": "50%",
+                                    "marginTop": "5px"
+                                }
+                            )
+                        ],
+                        id="left_div",
+                        className="six columns",
+                        style={
+                            "paddingLeft": "15px",
+                        }
+                    ),
+                    html.Div(
+                        [
+                            html.P(
+                                "Model",
+                                style={
+                                    "color": "white",
+                                    "marginBottom": "0",
+                                }
+                            ),
+                            dcc.RadioItems(
+                                id="select_model",
+                                options=[
+                                    {"label": i, "value": i} for i in model
+                                ],
+                                labelStyle={
+                                    "display": "inline-block",
+                                    "marginRight": "10px"
+                                },
+                                style={
+                                    "marginTop": "5px"
+                                }
+                            )
+                        ],
+                        id="right_div",
+                        className="six columns",
+                        style={
+                            "marginTop": "19px",
+                        }
+                    )
+                ],
+                className="row",
+            ),
+            html.Div(
+                id="analyze_result",
+            ),
+        ])
+    elif tab == 'tab-analyze':
+        return html.Div([
+            html.Div(
+                [
+                    # row div with 2 div
+                    html.Div(
+                        [
+                            html.Span(
+                                "SELECT PARAMETERS",
+                                id="modal_parameter",
+                                style={
+                                    "marginBottom": "10px",
+                                    "color": "#45df7e",
+                                }
+                            ),
+                            html.P(
+                                "LAG",
+                                style={
+                                    "color": "white",
+                                    "marginBottom": "0",
+                                }
+                            ),
+                            dcc.Input(
+                                id='lag',
+                                type='number',
+                                min=0,
+                                step=1,
+                                value=20
+                            )
+                        ],
+                        id="left_div",
+                        className="six columns",
+                        style={
+                            "paddingLeft": "15px",
+                        }
+                    ),
+                    html.Div(
+                        [
+                            html.P(
+                                "ALPHA",
+                                style={
+                                    "color": "white",
+                                    "marginBottom": "0",
+                                }
+                            ),
+                            dcc.Input(
+                                id='alpha',
+                                type='number',
+                                min=0.01,
+                                max=0.99,
+                                step=0.01,
+                                value=0.05
+                            )
+                        ],
+                        id="right_div",
+                        className="six columns",
+                        style={
+                            "marginTop": "19px",
+                        }
+                    )
+                ],
+                className="row",
+            ),
+            html.Div(
+                id="analyze_result",
+            ),
+        ])
 
+
+# reset analyze result
+@app.callback(
+    Output("analyze_button", "n_clicks"),
+    [
+        Input("closeModal", "n_clicks"),
+        Input("accept", "n_clicks"),
+    ]
+)
+def reset_analyze_result(n, n2):
+    if n > 0:
+        return 0
+    if n2 > 0:
+        return 0
+
+
+# analyze result
+@app.callback(
+    Output("analyze_result", "children"),
+    [
+        Input("analyze_button", "n_clicks"),
+        Input("alpha", "value"),
+        Input("lag", "value")
+    ]
+)
+def return_analyze_result(n3, alpha, lag):
+    mng_client = MongoClient(HOST)
+    mng_db = mng_client[DATABASE]
+    db_cm_history = mng_db[History_data]
+    db_cm_component = mng_db[CompoColl]
+    df_history = pd.DataFrame(list(db_cm_history.find(
+        {
+            "name": "VN 30"
+        }
+    )))
+    acf_value, confint_upper_acf, confint_lower_acf = calculate_acf(df_history['close'], lag, alpha)
+    pacf_value, confint_upper_pacf, confint_lower_pacf = calculate_pacf(df_history['close'], lag, alpha)
+    if n3 > 0:
+        trace_acf_value = go.Scatter(
+            y=acf_value,
+            mode='markers',
+            marker={
+                'size': 8,
+                'color': '#f7942e'
+            },
+            name='ACF'
+        )
+        trace_confint_upper_acf = go.Scatter(
+            y=confint_upper_acf,
+            mode='lines',
+            line=dict(color='red'),
+            opacity=0.7,
+            showlegend=False
+        )
+        trace_confint_lower_acf = go.Scatter(
+            y=confint_lower_acf,
+            mode='lines',
+            line=dict(color='red'),
+            opacity=0.7,
+            showlegend=False
+        )
+        trace_pacf_value = go.Scatter(
+            y=pacf_value,
+            mode='markers',
+            marker={
+                'size': 8,
+                'color': '#007bff'
+            },
+            name='PACF'
+        )
+        trace_confint_upper_pacf = go.Scatter(
+            y=confint_upper_pacf,
+            mode='lines',
+            line=dict(color='red'),
+            opacity=0.7,
+            showlegend=False
+        )
+        trace_confint_lower_pacf = go.Scatter(
+            y=confint_lower_pacf,
+            mode='lines',
+            line=dict(color='red'),
+            opacity=0.7,
+            showlegend=False
+        )
+        figure = tools.make_subplots(
+            rows=2,
+            cols=1,
+            print_grid=False,
+            # shared_xaxes=True,
+            # shared_yaxes=True,
+        )
+        figure.append_trace(trace_pacf_value, 2, 1)
+        figure.append_trace(trace_confint_lower_pacf, 2, 1)
+        figure.append_trace(trace_confint_upper_pacf, 2, 1)
+        figure.append_trace(trace_acf_value, 1, 1)
+        figure.append_trace(trace_confint_lower_acf, 1, 1)
+        figure.append_trace(trace_confint_upper_acf, 1, 1)
+        figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
+        figure['layout'].update(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
+        return dcc.Graph(
+            id='analyze_result_graph',
+            figure=figure
+        )
 #indice information
-@app.callback((Output("indice-information", "children")),
-              [
-                  Input("input", "value"),
-                  Input('indice-component', 'value'),
-              ])
+@app.callback(
+    (Output("indice-information", "children")),
+    [
+        Input("input", "value"),
+        Input('indice-component', 'value'),
+    ]
+)
 def get_indice_informations(selected_indice, indice_component):
     mng_client = MongoClient(HOST)
     mng_db = mng_client[DATABASE]
