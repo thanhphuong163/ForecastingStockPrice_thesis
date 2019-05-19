@@ -10,6 +10,7 @@ from dash.dependencies import Output, Input, Event, State
 from plotly import tools
 from pymongo import MongoClient
 
+from src.query_data import QueryData
 from src.settings import DATABASE, IndColl, INDICES_LST, HOST, MockColl, Indice_options, History_data, CompoColl
 from src.utilities import calculate_acf, calculate_pacf
 
@@ -514,6 +515,9 @@ app.layout = html.Div(
                                 html.Div(
                                     id='indice-information',
                                 ),
+                                html.Div(
+                                    id='component-information',
+                                ),
                                 dcc.Interval(
                                     id='graph-update',
                                     interval=1 * 20000
@@ -622,7 +626,10 @@ def update_time(t):
 #component options of selected indice
 @app.callback((Output("indice-component", "options")), [Input("input", "value")])
 def set_indice_options(selected_indice):
-    return [{'label': i, 'value': i} for i in Indice_options[selected_indice]]
+    mng_client = MongoClient(HOST)
+    query = QueryData(mng_client)
+    lst_ticket = query.get_list_ticket(index=selected_indice)
+    return [{'label': i, 'value': i} for i in lst_ticket]
 
 
 # open or close modal
@@ -837,65 +844,92 @@ def return_analyze_result(n3, alpha, lag):
     acf_value, confint_upper_acf, confint_lower_acf = calculate_acf(df_history['close'], lag, alpha)
     pacf_value, confint_upper_pacf, confint_lower_pacf = calculate_pacf(df_history['close'], lag, alpha)
     if n3 > 0:
-        trace_acf_value = go.Scatter(
-            y=acf_value,
-            mode='markers',
-            marker={
-                'size': 8,
-                'color': '#f7942e'
-            },
-            name='ACF'
-        )
+        # trace_acf_value = go.Scatter(
+        #     y=acf_value,
+        #     mode='markers',
+        #     marker={
+        #         'size': 8,
+        #         'color': '#f7942e'
+        #     },
+        #     name='ACF'
+        # )
         trace_confint_upper_acf = go.Scatter(
             y=confint_upper_acf,
             mode='lines',
-            line=dict(color='red'),
+            line=dict(color='#5fba7d'),
             opacity=0.7,
-            showlegend=False
+            showlegend=False,
+            fill="tozeroy"
         )
         trace_confint_lower_acf = go.Scatter(
             y=confint_lower_acf,
             mode='lines',
-            line=dict(color='red'),
+            line=dict(color='#5fba7d'),
             opacity=0.7,
-            showlegend=False
+            showlegend=False,
+            fill="tozeroy"
         )
-        trace_pacf_value = go.Scatter(
-            y=pacf_value,
-            mode='markers',
-            marker={
-                'size': 8,
-                'color': '#007bff'
-            },
-            name='PACF'
-        )
+        # trace_pacf_value = go.Scatter(
+        #     y=pacf_value,
+        #     mode='markers',
+        #     marker={
+        #         'size': 8,
+        #         'color': '#007bff'
+        #     },
+        #     name='PACF'
+        # )
         trace_confint_upper_pacf = go.Scatter(
             y=confint_upper_pacf,
             mode='lines',
-            line=dict(color='red'),
+            line=dict(color='#5fba7d'),
             opacity=0.7,
-            showlegend=False
+            showlegend=False,
+            fill="tozeroy"
         )
         trace_confint_lower_pacf = go.Scatter(
             y=confint_lower_pacf,
             mode='lines',
-            line=dict(color='red'),
+            line=dict(color='#5fba7d'),
             opacity=0.7,
-            showlegend=False
+            showlegend=False,
+            fill="tozeroy"
         )
+        # figure = tools.make_subplots(
+        #     rows=2,
+        #     cols=1,
+        #     print_grid=False,
+        #     # shared_xaxes=True,
+        #     # shared_yaxes=True,
+        # )
+        # figure.append_trace(trace_pacf_value, 2, 1)
+        # figure.append_trace(trace_confint_lower_pacf, 2, 1)
+        # figure.append_trace(trace_confint_upper_pacf, 2, 1)
+        # figure.append_trace(trace_acf_value, 1, 1)
+        # figure.append_trace(trace_confint_lower_acf, 1, 1)
+        # figure.append_trace(trace_confint_upper_acf, 1, 1)
+        # figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
+        # figure['layout'].update(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
+        data_acf = go.Bar(
+            y=acf_value,
+            name='Autocorrelation'
+        )
+
+        data_pacf = go.Bar(
+            y=pacf_value,
+            name='Partial Autocorrelation'
+        )
+
         figure = tools.make_subplots(
             rows=2,
             cols=1,
             print_grid=False,
-            # shared_xaxes=True,
-            # shared_yaxes=True,
         )
-        figure.append_trace(trace_pacf_value, 2, 1)
-        figure.append_trace(trace_confint_lower_pacf, 2, 1)
-        figure.append_trace(trace_confint_upper_pacf, 2, 1)
-        figure.append_trace(trace_acf_value, 1, 1)
+        figure.append_trace(data_acf, 1, 1)
         figure.append_trace(trace_confint_lower_acf, 1, 1)
         figure.append_trace(trace_confint_upper_acf, 1, 1)
+        figure.append_trace(data_pacf, 2, 1)
+        figure.append_trace(trace_confint_lower_pacf, 2, 1)
+        figure.append_trace(trace_confint_upper_pacf, 2, 1)
         figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
         figure['layout'].update(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
         return dcc.Graph(
@@ -994,17 +1028,28 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
         #     end_date = dt.strptime(end_date, '%Y-%m-%d')
         #     end_date = float(end_date.replace(tzinfo=timezone.utc).timestamp())
 
-
-        df_ind = pd.DataFrame(list(db_cm_ind.find(
-            {
-                "name": input_data
-            }
-        )))
-        df_history = pd.DataFrame(list(db_cm_history.find(
-            {
-                "name": "VN 30"
-            }
-        )))
+        if input_data_component is not None:
+            df_ind = pd.DataFrame(list(db_cm_ind.find(
+                {
+                    "name": input_data_component
+                }
+            )))
+            df_history = pd.DataFrame(list(db_cm_history.find(
+                {
+                    "name": input_data_component
+                }
+            )))
+        else:
+            df_ind = pd.DataFrame(list(db_cm_ind.find(
+                {
+                    "name": input_data
+                }
+            )))
+            df_history = pd.DataFrame(list(db_cm_history.find(
+                {
+                    "name": input_data
+                }
+            )))
 
         df_history_component = pd.DataFrame(list(db_cm_component.find(
             {

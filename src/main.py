@@ -93,5 +93,5 @@ if __name__ == '__main__':
 	# query_data = QueryData(dbClient=client)
 	# lst_symbol = query_data.get_list_ticket()
 	# print(lst_symbol)
-	# get_historical_data()
-	demo()
+	get_historical_data()
+# demo()
