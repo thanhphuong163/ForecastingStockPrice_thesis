@@ -147,7 +147,7 @@ class WebScraping:
 				change=np.mean(df['change']),
 				chang_per=np.mean(df['change_per']),
 				volume=list(df['volume'])[-1],
-				time=time.time(),
+				date=time.time(),
 			)
 			lst_1.append(tmp)
 		indices_coll = self.database[IndColl]
@@ -167,7 +167,7 @@ class WebScraping:
 				change=np.mean(df['change']),
 				chang_per=np.mean(df['change_per']),
 				volume=list(df['volume'])[-1],
-				time=time.time(),
+				date=time.time(),
 			)
 			lst_2.append(tmp)
 		components_coll = self.database[CompoColl]
@@ -176,6 +176,8 @@ class WebScraping:
 		# Clean data in two dataframes self.component_df and self.indices_df
 		self.indices_df = self.indices_df.drop(self.indices_df.index, inplace=True)
 		self.component_df = self.component_df.drop(self.component_df.index, inplace=True)
+		self.indices_df = pd.DataFrame()
+		self.component_df = pd.DataFrame()
 
 	def start_scraping(self):
 		if self.verbose:
@@ -214,6 +216,7 @@ class WebScraping:
 				volume=self.convert_volume(lst_col[5].text),
 				change_per=self.convert_change_per(lst_col[6].text)
 			)
+			print('lst_data')
 			lst_data.append(dct_row)
 		return lst_data
 
