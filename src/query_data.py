@@ -25,7 +25,6 @@ class QueryData:
 		his_data_coll = self.database[History_data]
 		query = {
 			'name': {'$in': lst_symbol},
-			'date': {}
 		}
 		if start is not None:
 			query['date']['$gte'] = start
@@ -48,9 +47,10 @@ class QueryData:
 		df['volume'] = data['volume'].resample(rule).sum().fillna(method='ffill')
 		return df
 
-	def get_list_ticket(self):
+	def get_list_ticket(self, index='VNI30'):
 		his_data_coll = self.database[History_data]
-		cursor = his_data_coll.find({})
+		cursor = his_data_coll.find({'index': {'$eq': index}})
 		df = pd.DataFrame(data=list(cursor))
 		df_ticket = df[['ticket', 'name']].drop_duplicates()
-		return df_ticket
+		lst_ticket = list(df_ticket['name'])
+		return lst_ticket

@@ -9,6 +9,7 @@
       <w>dataframes</w>
       <w>ffill</w>
       <w>insample</w>
+      <w>mape</w>
       <w>mongo</w>
       <w>nhan</w>
       <w>ntphuong</w>
@@ -18,6 +19,7 @@
       <w>pred</w>
       <w>prefs</w>
       <w>resample</w>
+      <w>rmse</w>
       <w>scaler</w>
       <w>tbody</w>
       <w>urlheader</w>

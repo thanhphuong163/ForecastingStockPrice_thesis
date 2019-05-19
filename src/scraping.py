@@ -206,6 +206,7 @@ class WebScraping:
 				date=self.convert_date(lst_col[0].text),
 				name=ticket['name'],
 				ticket=ticket['ticket'],
+				index=ticket['index'],
 				close=self.convert_number(lst_col[1].text),
 				open=self.convert_number(lst_col[2].text),
 				high=self.convert_number(lst_col[3].text),

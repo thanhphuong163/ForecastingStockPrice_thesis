@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:56
+from datetime import datetime
 
 from pymongo import MongoClient
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 from src.config_tickets import ticket_lst
+from src.query_data import QueryData
 from src.scraping import WebScraping
 from src.settings import HOST
+from src.utilities import run_model
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
@@ -35,15 +38,36 @@ def request_2_website():
 
 
 def connect_2_dbServer():
-	mongoClient = MongoClient(HOST)
-	return mongoClient
+	mongo_client = MongoClient(HOST)
+	return mongo_client
 
 
 def get_historical_data():
 	client = connect_2_dbServer()
 	driver_lst = request_2_website()
 	scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
-	scraper.scrape_historical_data(years=3)
+	scraper.scrape_historical_data(years=5)
+
+
+def demo():
+	start = datetime(2010, 1, 1)
+	client = connect_2_dbServer()
+	index = 'VNI30'
+	query = QueryData(dbClient=client)
+	df_ticket = query.get_list_ticket(index)
+	lst_ticket = list(df_ticket['name'][:5])
+	print(lst_ticket)
+	df = query.get_historical_data(lst_ticket)
+
+	# closed_price = pd.DataFrame()
+	for ticket in lst_ticket:
+		# closed_price[ticket] = df[df.name == ticket]['close']
+		print(ticket)
+		time_series = df[df.name == ticket]['close']
+		run_model(time_series)
+
+
+# print(closed_price)
 
 
 def test():
@@ -69,4 +93,5 @@ if __name__ == '__main__':
 	# query_data = QueryData(dbClient=client)
 	# lst_symbol = query_data.get_list_ticket()
 	# print(lst_symbol)
-	get_historical_data()
+	# get_historical_data()
+	demo()
