@@ -426,7 +426,7 @@ def modal():
                                 "marginTop": "0",
                                 "marginBottom": "10",
                                 "position": "relative",
-                                "left": "730px",
+	                            "left": "683px",
                                 "bottom": "22px",
                             }
                         ),
@@ -465,10 +465,12 @@ def modal():
                     style={
                         "backgroundColor": "#18252E",
                         "width": "50%",
+	                    "height": "70%",
                         "border": "3px solid rgba(68,149,209,.9)",
                         "borderRadius": "10px",
                         "padding": "20px",
                         "margin": "5% auto",
+	                    'overflow': "auto",
                         "position": "fixed",
                         "zIndex": "1000",
                         "left": "0",
@@ -526,7 +528,7 @@ app.layout = html.Div(
                         ),
                     ],
                     style={"float": "left", "backgroundColor": "#18252e", "padding": "20px",
-                           "border": "1px solid rgba(68, 149, 209, 0.9)", "width": "312px"},
+                           "border": "1px solid rgba(68, 149, 209, 0.9)", "width": "318px"},
                 ),
                 html.Div(
                     [
@@ -672,7 +674,7 @@ def render_content(tab):
                                 }
                             ),
                             html.P(
-                                "Time",
+	                            "TIME",
                                 style={
                                     "color": "white",
                                     "marginBottom": "0",
@@ -705,7 +707,7 @@ def render_content(tab):
                     html.Div(
                         [
                             html.P(
-                                "Model",
+	                            'MODEL',
                                 style={
                                     "color": "white",
                                     "marginBottom": "0",
@@ -828,29 +830,19 @@ def reset_analyze_result(n, n2):
     [
         Input("analyze_button", "n_clicks"),
         Input("alpha", "value"),
-        Input("lag", "value"),
-        Input("input", "value"),
-        Input('indice-component', 'value'),
+	    Input("lag", "value")
     ]
 )
-def return_analyze_result(n3, alpha, lag, input_data, input_component):
+def return_analyze_result(n3, alpha, lag):
     mng_client = MongoClient(HOST)
     mng_db = mng_client[DATABASE]
     db_cm_history = mng_db[History_data]
     db_cm_component = mng_db[CompoColl]
-    if input_component is not None:
-        df_history = pd.DataFrame(list(db_cm_history.find(
-            {
-                "name": input_component
-            }
-        )))
-    else:
-        df_history = pd.DataFrame(list(db_cm_history.find(
-            {
-                "name": input_data
-            }
-        )))
-
+    df_history = pd.DataFrame(list(db_cm_history.find(
+	    {
+		    "name": "VN 30"
+	    }
+    )))
     acf_value, confint_upper_acf, confint_lower_acf = calculate_acf(df_history['close'], lag, alpha)
     pacf_value, confint_upper_pacf, confint_lower_pacf = calculate_pacf(df_history['close'], lag, alpha)
     if n3 > 0:
@@ -1133,7 +1125,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                     "name": input_data
                 }
             )))
-        df_ind['date'] = df_ind['date'].apply(lambda x: dt.fromtimestamp(x).isoformat())
+        df_ind['date'] = df_ind['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
 
         df_ind = df_ind.sort_values(by=['date'])
         print(df_ind)
