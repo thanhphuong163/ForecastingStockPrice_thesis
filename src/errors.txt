@@ -143,3 +143,11 @@ strptime() takes exactly 2 arguments (1 given)
 strptime() takes exactly 2 arguments (1 given)
 strptime() takes exactly 2 arguments (1 given)
 strptime() takes exactly 2 arguments (1 given)
+'date'
+'date'
+'date'
+'date'
+'date'
+'date'
+'date'
+'date'
