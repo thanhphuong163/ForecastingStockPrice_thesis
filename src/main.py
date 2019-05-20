@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:56
+import time
 from datetime import datetime
-
 from pymongo import MongoClient
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,6 +11,7 @@ from src.config_tickets import ticket_lst
 from src.query_data import QueryData
 from src.scraping import WebScraping
 from src.settings import HOST
+from src.utilities import run_model
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
@@ -54,16 +55,20 @@ def demo():
 	index = 'VN 30 (VNI30)'
 	query = QueryData(dbClient=client)
 	lst_ticket = query.get_list_ticket(index)
+	print(lst_ticket)
+	df = query.get_historical_data(lst_ticket)
 
-
-# df = query.get_historical_data(lst_ticket)
-#
-# # closed_price = pd.DataFrame()
-# for ticket in lst_ticket:
-# 	# closed_price[ticket] = df[df.name == ticket]['close']
-# 	print(ticket)
-# 	time_series = df[df.name == ticket]['close']
-# 	run_model(time_series)
+	# closed_price = pd.DataFrame()
+	for ticket in lst_ticket[:5]:
+		# closed_price[ticket] = df[df.name == ticket]['close']
+		print(ticket)
+		time_series = df[df.name == ticket]['close']
+		# time_series = time_series.drop_duplicates()
+		result = run_model(time_series, model_selection='ANN')
+		time.sleep(1)
+		print(ticket)
+		print('Training result:', result['train_evaluation'])
+		print('Testing result:', result['test_evaluation'])
 
 
 # print(closed_price)
@@ -92,5 +97,5 @@ if __name__ == '__main__':
 	# query_data = QueryData(dbClient=client)
 	# lst_symbol = query_data.get_list_ticket()
 	# print(lst_symbol)
-	get_historical_data()
-# demo()
+	# get_historical_data()
+	demo()

@@ -13,7 +13,7 @@ __email__ = 'thanhphuong.its@gmail.com'
 
 
 class ArimaModel:
-	def __init__(self, historical_data=None, order=(1, 1, 0)):
+	def __init__(self, historical_data: pd.Series, order=(1, 1, 0)):
 		self.historical_data = historical_data
 		self.order = order
 
@@ -69,7 +69,7 @@ class ArimaModel:
 
 
 class AnnModel:
-	def __init__(self, historical_data=None, lag=5, hidden_layers=(5,)):
+	def __init__(self, historical_data: pd.Series, lag=5, hidden_layers=(5,)):
 		self.historical_data = historical_data
 		self.lag = lag
 		self.scaler = MinMaxScaler(feature_range=(-1, 1))
@@ -151,7 +151,7 @@ class AnnModel:
 
 
 class HybridModel:
-	def __init__(self, historical_data=None, order=(1, 1, 0), lag=5, hidden_layers=(5,)):
+	def __init__(self, historical_data: pd.Series, order=(1, 1, 0), lag=5, hidden_layers=(5,)):
 		self.historical_data = historical_data
 		self.order = order
 		self.lag = lag

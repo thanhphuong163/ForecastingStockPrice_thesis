@@ -57,9 +57,10 @@ def evaluation(validation):
 	return result
 
 
-def run_model(time_series, model_selection='ARIMA', start_train=0.85, end_train=0.97,
+def run_model(time_series: pd.Series, model_selection='ARIMA', start_train=0.85, end_train=0.97,
               order=(1, 1, 0), lag=2, hidden_layers=(7, 3), steps=60):
 	# split data
+	time_series = time_series.drop_duplicates()
 	size = len(time_series)
 	train_start = int(start_train * size)
 	train_end = int(end_train * size)
@@ -93,3 +94,4 @@ def run_model(time_series, model_selection='ARIMA', start_train=0.85, end_train=
 	test_validate['yhat'] = model.validate(test)
 	test_result = evaluation(test_validate)
 	result['test_evaluation'] = test_result
+	return result
