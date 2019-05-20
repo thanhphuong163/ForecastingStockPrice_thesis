@@ -830,19 +830,28 @@ def reset_analyze_result(n, n2):
     [
         Input("analyze_button", "n_clicks"),
         Input("alpha", "value"),
-	    Input("lag", "value")
+        Input("lag", "value"),
+        Input("input", "value"),
+        Input('indice-component', 'value'),
     ]
 )
-def return_analyze_result(n3, alpha, lag):
+def return_analyze_result(n3, alpha, lag, input_data, input_component):
     mng_client = MongoClient(HOST)
     mng_db = mng_client[DATABASE]
     db_cm_history = mng_db[History_data]
     db_cm_component = mng_db[CompoColl]
-    df_history = pd.DataFrame(list(db_cm_history.find(
-	    {
-		    "name": "VN 30"
-	    }
-    )))
+    if input_component is not None:
+        df_history = pd.DataFrame(list(db_cm_history.find(
+            {
+                "name": input_component
+            }
+        )))
+    else:
+        df_history = pd.DataFrame(list(db_cm_history.find(
+            {
+                "name": input_data
+            }
+        )))
     acf_value, confint_upper_acf, confint_lower_acf = calculate_acf(df_history['close'], lag, alpha)
     pacf_value, confint_upper_pacf, confint_lower_pacf = calculate_pacf(df_history['close'], lag, alpha)
     if n3 > 0:
