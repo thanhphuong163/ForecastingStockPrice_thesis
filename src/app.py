@@ -936,6 +936,8 @@ def return_analyze_result(n3, alpha, lag):
             id='analyze_result_graph',
             figure=figure
         )
+
+
 #indice information
 @app.callback(
     (Output("indice-information", "children")),
@@ -954,7 +956,8 @@ def get_indice_informations(selected_indice, indice_component):
     return html.Div([
         html.P(
             selected_indice,
-            style={"color": "white", "textAlign": "left", "fontSize": "25px", "textTransform": "uppercase", }
+            style={"color": "rgb(69, 223, 126)", "textAlign": "left", "fontSize": "15px",
+                   "textTransform": "uppercase", }
         ),
         html.Div(
             [
@@ -1005,6 +1008,77 @@ def get_indice_informations(selected_indice, indice_component):
         style={"backgroundColor": "#18252e", "padding": "20px", "margin-top": "20px"},
     )
 
+
+# component information
+@app.callback(
+    (Output("component-information", "children")),
+    [
+        Input('indice-component', 'value'),
+    ]
+)
+def get_component_information(selected_component):
+    mng_client = MongoClient(HOST)
+    mng_db = mng_client[DATABASE]
+    db_cm_component = mng_db[CompoColl]
+    df_component = pd.DataFrame(
+        list(db_cm_component.find({"name": selected_component}).sort("date", pymongo.DESCENDING).limit(2)))
+    df_component['date'] = df_component['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
+    last_price = str(df_component['last'].values[0].round(2))
+    return html.Div([
+        html.P(
+            selected_component,
+            style={"color": "rgb(69, 223, 126)", "textAlign": "left", "fontSize": "15px",
+                   "textTransform": "uppercase", }
+        ),
+        html.Div(
+            [
+                html.P(
+                    "date time",
+                    className="four columns",
+                    style={"color": "white", "textAlign": "center", "fontSize": "10px", "textTransform": "uppercase",
+                           "margin": "auto"}
+                ),
+                html.P(
+                    "close price",
+                    className="four columns",
+                    style={"color": "white", "textAlign": "center", "fontSize": "10px", "textTransform": "uppercase",
+                           "margin": "auto"}
+                ),
+                html.P(
+                    "volume",
+                    className="four columns",
+                    style={"color": "white", "textAlign": "center", "fontSize": "10px", "textTransform": "uppercase",
+                           "margin": "auto"}
+                ),
+            ],
+        ),
+        html.Div(
+            [
+                html.P(
+                    df_component['date'].values[0],
+                    className="four columns",
+                    style={"color": "white", "textAlign": "center", "fontSize": "10px", "textTransform": "uppercase",
+                           "margin": "auto"}
+                ),
+                html.P(
+                    last_price,
+                    className="four columns",
+                    style={"color": get_color(df_component['last'].values[0], df_component['last'].values[1]),
+                           "textAlign": "center", "fontSize": "10px", "textTransform": "uppercase",
+                           "margin": "auto"}
+                ),
+                html.P(
+                    df_component['volume'].values[0],
+                    className="four columns",
+                    style={"color": "white", "textAlign": "center", "fontSize": "10px", "textTransform": "uppercase",
+                           "margin": "auto"}
+                ),
+            ],
+        ),
+    ],
+        style={"backgroundColor": "#18252e", "padding": "20px", "margin-top": "20px"},
+    )
+
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
                Input('indice-component', 'value'),
@@ -1027,7 +1101,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
         #     end_date = dt.strptime(end_date, '%Y-%m-%d')
         #     end_date = float(end_date.replace(tzinfo=timezone.utc).timestamp())
 
-        if input_data_component is not None:
+        if input_data_component is not None and input_data is not None:
             df_ind = pd.DataFrame(list(db_cm_component.find(
                 {
                     "name": input_data_component
@@ -1038,7 +1112,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                     "name": input_data_component
                 }
             )))
-        else:
+        elif input_data_component is None and input_data is not None:
             df_ind = pd.DataFrame(list(db_cm_ind.find(
                 {
                     "name": input_data
@@ -1049,13 +1123,13 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                     "name": input_data
                 }
             )))
-
-        df_ind['date'] = df_ind['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
+        df_ind['date'] = df_ind['date'].apply(lambda x: dt.utcfromtimestamp(x).strptime('%Y-%m-%d %H:%M:%S'))
 
         df_ind = df_ind.sort_values(by=['date'])
+        print(df_ind)
         df_history = df_history.sort_values(by=['date'])
         df_ind['last'] = df_ind['last'].round(4)
-        print(df_ind['date'])
+
         if (chart_type == 'line_trace'):
             trace_ind = go.Scatter(
                 x=df_history['date'],
