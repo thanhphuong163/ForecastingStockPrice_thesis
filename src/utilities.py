@@ -5,10 +5,15 @@ import itertools
 
 import numpy as np
 import pandas as pd
+from pymongo import MongoClient
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.stattools import pacf, acf
 
 from Models.Arima_Ann import HybridModel, AnnModel, ArimaModel
+from src.config_tickets import ticket_lst
+from src.scraping import WebScraping
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
@@ -118,3 +123,30 @@ def run_model_without_parameter(time_series: pd.Series, model_selection='ARIMA',
                                 p=range(1, 4), d=range(0, 2), q=range(0, 3), lags=range(1, 5),
                                 hl=range(2, 8)):
 	pass
+
+
+def request_2_website():
+	options = Options()
+	options.add_argument("--headless")
+	prefs = {"profile.managed_default_content_settings.images": 2}
+	options.add_experimental_option("prefs", prefs)
+	drivers = list()
+	print('Requesting...')
+	for ticket in ticket_lst:
+		driver = webdriver.Chrome(options=options)
+		driver.get(ticket['url'])
+		drivers.append(driver)
+	print('Requesting completed.')
+	return drivers
+
+
+def update_database(client: MongoClient, years=5):
+	driver_lst = request_2_website()
+	scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
+	scraper.scrape_historical_data(years=years)
+
+
+def get_real_time_data(client: MongoClient):
+	driver_lst = request_2_website()
+	scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
+	scraper.start_scraping()

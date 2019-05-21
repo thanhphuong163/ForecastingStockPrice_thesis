@@ -12,7 +12,7 @@ from src.config_tickets import ticket_lst
 from src.query_data import QueryData
 from src.scraping import WebScraping
 from src.settings import HOST
-from src.utilities import run_model
+from src.utilities import run_model_with_parameters
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
@@ -64,7 +64,7 @@ def demo():
 		print(ticket)
 		time_series = df[df.name == ticket]['close']
 		# time_series = time_series.drop_duplicates()
-		result = run_model(time_series, model_selection='ANN')
+		result = run_model_with_parameters(time_series, model_selection='ANN')
 		time.sleep(1)
 		print(ticket)
 		print('Training result:', result['train_evaluation'])
