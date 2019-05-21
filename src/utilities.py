@@ -147,6 +147,7 @@ def update_database(client: MongoClient, years=5):
 
 
 def get_real_time_data(client: MongoClient):
+	print('blah blah')
 	driver_lst = request_2_website()
 	scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
 	scraper.start_scraping()

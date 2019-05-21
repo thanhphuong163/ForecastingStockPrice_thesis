@@ -13,7 +13,7 @@ from pymongo import MongoClient
 
 from src.query_data import QueryData
 from src.settings import DATABASE, IndColl, INDICES_LST, HOST, Indice_options, History_data, CompoColl
-from src.utilities import calculate_acf, calculate_pacf
+from src.utilities import calculate_acf, calculate_pacf, update_database
 
 Stock_name = INDICES_LST
 
@@ -492,8 +492,9 @@ app.layout = html.Div(
         dcc.Interval(id="interval", interval=1 * 1000, n_intervals=0),
         dcc.ConfirmDialog(
             id='confirm',
-            message='Are you sure?',
+            message='Do you really want to update history data?',
         ),
+        html.Div(id='confirm-output', style={'display': 'none'}),
         html.Div(
             [
                 html.Div(
@@ -561,6 +562,7 @@ app.layout = html.Div(
                 html.Div(
                     [
                         daq.BooleanSwitch(
+                            id='my-boolean-switch',
                             on=False,
                             label=dict(
                                 style={"color": "rgb(69, 223, 126)"},
@@ -661,6 +663,19 @@ def display_confirm(n):
     if n > 0:
         return True
     return False
+
+
+app.callback(Output('confirm-output', 'children'),
+             [Input('confirm', 'submit_n_clicks')])
+
+
+def update_history_data(submit_n_clicks):
+    if not submit_n_clicks:
+        return ''
+    else:
+        mng_client = MongoClient(HOST)
+        update_database(mng_client)
+        return ''
 
 
 # open or close modal
@@ -1122,24 +1137,23 @@ def get_component_information(selected_component):
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
                Input('indice-component', 'value'),
-               # Input('my-date-picker-range', 'start_date'),
-               # Input('my-date-picker-range', 'end_date'),
                Input('chart_type', 'value'),
-               Input('timing', 'values')],
+               Input('timing', 'values'),
+               Input('my-boolean-switch', 'on')
+               ],
               events=[Event('graph-update', 'interval')])
-def update_graph_scatter(input_data, input_data_component, chart_type, studies):
+def update_graph_scatter(input_data, input_data_component, chart_type, studies, on):
     try:
         mng_client = MongoClient(HOST)
         mng_db = mng_client[DATABASE]
+
+        # if on == True:
+        #     print("running...")
+        #     get_real_time_data(mng_client)
+
         db_cm_ind = mng_db[IndColl]
         db_cm_history = mng_db[History_data]
         db_cm_component = mng_db[CompoColl]
-        # if start_date is not None:
-        #     start_date = dt.strptime(start_date, '%Y-%m-%d')
-        #     start_date = float(start_date.replace(tzinfo=timezone.utc).timestamp())
-        # if end_date is not None:
-        #     end_date = dt.strptime(end_date, '%Y-%m-%d')
-        #     end_date = float(end_date.replace(tzinfo=timezone.utc).timestamp())
 
         if input_data_component is not None and input_data is not None:
             df_ind = pd.DataFrame(list(db_cm_component.find(
@@ -1164,15 +1178,12 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                 }
             )))
 
-        print(df_ind['date'])
-        print(df_history['date'])
         df_ind['date'] = df_ind['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
 
         df_ind = df_ind.sort_values(by=['date'])
         df_history = df_history.sort_values(by=['date'])
         # df_ind = df_ind.drop_duplicates(keep=False,inplace=True)
         df_history = df_history.drop_duplicates(['date'], keep='last')
-        print(df_history)
         df_ind['last'] = df_ind['last'].round(4)
         if (chart_type == 'line_trace'):
             trace_ind = go.Scatter(
@@ -1281,7 +1292,8 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
             figure=figure,
             style={
                 "height": "579px"
-            }
+            },
+            animate=True
         )
     except Exception as e:
         with open('errors.txt', 'a') as f:
