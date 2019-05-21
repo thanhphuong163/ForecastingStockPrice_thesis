@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime as dt
 
 import dash
@@ -12,8 +13,9 @@ from plotly import tools
 from pymongo import MongoClient
 
 from src.query_data import QueryData
+from src.scraping import WebScraping
 from src.settings import DATABASE, IndColl, INDICES_LST, HOST, Indice_options, History_data, CompoColl
-from src.utilities import calculate_acf, calculate_pacf, update_database
+from src.utilities import calculate_acf, calculate_pacf, update_database, request_2_website
 
 Stock_name = INDICES_LST
 
@@ -22,6 +24,10 @@ timing = [
 ]
 
 model = ["ARIMA", "CNN", "HYBRID", "LSTM"]
+
+
+# database
+
 
 def _parseTime(date_time_str):
     date_time_obj = dt.strptime(date_time_str, '%b %d, %Y')
@@ -543,14 +549,14 @@ app.layout = html.Div(
                                     "Update database",
                                     id="button_chart_crawl",
                                     n_clicks=0,
-                                    style={"padding": "0 75px", "margin": "auto", "borderRadius": "10px"}
+                                    style={"padding": "0 60px", "margin": "auto", "borderRadius": "10px"}
                                 ),
 
                                 html.Button(
                                     "Analyze time series",
                                     id="button_chart",
                                     n_clicks=0,
-                                    style={"padding": "0 66px", "margin": "auto", "marginTop": "10px",
+                                    style={"padding": "0 52px", "margin": "auto", "marginTop": "10px",
                                            "borderRadius": "10px"}
                                 )
                             ]
@@ -570,6 +576,10 @@ app.layout = html.Div(
                             ),
                             color="rgb(255, 193, 7)",
                             labelPosition="top"
+                        ),
+                        html.Div(
+                            id='hide-switch',
+                            style={'display': 'none'}
                         )
 
                     ],
@@ -667,8 +677,6 @@ def display_confirm(n):
 
 app.callback(Output('confirm-output', 'children'),
              [Input('confirm', 'submit_n_clicks')])
-
-
 def update_history_data(submit_n_clicks):
     if not submit_n_clicks:
         return ''
@@ -676,7 +684,6 @@ def update_history_data(submit_n_clicks):
         mng_client = MongoClient(HOST)
         update_database(mng_client)
         return ''
-
 
 # open or close modal
 @app.callback(
@@ -769,7 +776,15 @@ def render_content(tab):
                                 style={
                                     "marginTop": "5px"
                                 }
-                            )
+                            ),
+                            # dcc.Input(
+                            #     id='p-order',
+                            #     type='number',
+                            #     min=1,
+                            #     step=1,
+                            #     value=1,
+                            #     style={'display': ''}
+                            # )
                         ],
                         id="right_div",
                         className="six columns",
@@ -1134,22 +1149,28 @@ def get_component_information(selected_component):
         style={"backgroundColor": "#18252e", "padding": "20px", "margin-top": "20px"},
     )
 
+
+# run real-time graph
+@app.callback(Output('hide-switch', 'children'),
+              [Input('my-boolean-switch', 'on')])
+def update_live_graph(on):
+    if on:
+        loop.run_forever()
+        return ''
+    else:
+        print('Stop scraping.')
+        loop.stop()
+        return ''
+
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
                Input('indice-component', 'value'),
                Input('chart_type', 'value'),
                Input('timing', 'values'),
-               Input('my-boolean-switch', 'on')
                ],
               events=[Event('graph-update', 'interval')])
-def update_graph_scatter(input_data, input_data_component, chart_type, studies, on):
+def update_graph_scatter(input_data, input_data_component, chart_type, studies):
     try:
-        mng_client = MongoClient(HOST)
-        mng_db = mng_client[DATABASE]
-
-        # if on == True:
-        #     print("running...")
-        #     get_real_time_data(mng_client)
 
         db_cm_ind = mng_db[IndColl]
         db_cm_history = mng_db[History_data]
@@ -1302,4 +1323,12 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies, 
 
 
 if __name__ == '__main__':
+    mng_client = MongoClient(HOST)
+    mng_db = mng_client[DATABASE]
+
+    driver_lst = request_2_website()
+    scraper = WebScraping(driver_lst=driver_lst, dbClient=mng_client, verbose=True)
+
+    loop = asyncio.get_event_loop()
+    asyncio.ensure_future(scraper.start_scraping())
     app.run_server(debug=True)
