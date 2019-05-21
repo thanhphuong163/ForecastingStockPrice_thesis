@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:57
+import asyncio
 import time
 from datetime import datetime
 
@@ -128,7 +129,7 @@ class WebScraping:
 				df = self.scrape_components(driver)
 				self.indices_df = self.indices_df.append(self.convert_indices(row), ignore_index=True)
 				self.component_df = self.component_df.append(self.convert_components(df), ignore_index=True)
-			time.sleep(SLEEP_TIME)
+		# time.sleep(SLEEP_TIME)
 		except Exception as e:
 			print(e.args)
 
@@ -170,6 +171,8 @@ class WebScraping:
 				date=time.time(),
 			)
 			lst_2.append(tmp)
+		if self.verbose:
+			print('lst_2')
 		components_coll = self.database[CompoColl]
 		components_coll.insert_many(lst_2)
 
@@ -179,7 +182,7 @@ class WebScraping:
 		self.indices_df = pd.DataFrame()
 		self.component_df = pd.DataFrame()
 
-	def start_scraping(self):
+	async def start_scraping(self):
 		if self.verbose:
 			print('Start scraping...')
 		start = time.time()
@@ -187,6 +190,7 @@ class WebScraping:
 			current = time.time()
 			if current - start < SCRAPING_TIME:
 				self.scraping()
+				await asyncio.sleep(SLEEP_TIME)
 			else:
 				self.organize_data()
 				start = time.time()

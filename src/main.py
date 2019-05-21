@@ -12,7 +12,7 @@ from src.config_tickets import ticket_lst
 from src.query_data import QueryData
 from src.scraping import WebScraping
 from src.settings import HOST
-from src.utilities import run_model_with_parameters
+from src.utilities import run_model_with_parameters, get_real_time_data
 
 __author__ = 'phuongnt18'
 __email__ = 'phuongnt18@vng.com.vn'
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 	# start = datetime.today() - relativedelta(months=4)
 	# end = datetime.today()
 	# print('Initialized.')
-	# client = connect_2_dbServer()
+	client = connect_2_dbServer()
 	# driver_lst = request_2_website()
 	# scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
 	# scraper.start_scraping()
@@ -97,5 +97,6 @@ if __name__ == '__main__':
 	# query_data = QueryData(dbClient=client)
 	# lst_symbol = query_data.get_list_ticket()
 	# print(lst_symbol)
-	get_historical_data()
+	get_real_time_data(client)
+
 # demo()

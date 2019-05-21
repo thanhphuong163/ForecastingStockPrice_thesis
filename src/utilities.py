@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:50
+import asyncio
 import itertools
 
 import numpy as np
@@ -146,8 +147,14 @@ def update_database(client: MongoClient, years=5):
 	scraper.scrape_historical_data(years=years)
 
 
-def get_real_time_data(client: MongoClient):
+def get_real_time_data(client: MongoClient, on=True):
 	print('blah blah')
 	driver_lst = request_2_website()
 	scraper = WebScraping(driver_lst=driver_lst, dbClient=client, verbose=True)
-	scraper.start_scraping()
+
+	loop = asyncio.get_event_loop()
+	asyncio.ensure_future(scraper.start_scraping())
+	if on:
+		loop.run_forever()
+	else:
+		loop.stop()
