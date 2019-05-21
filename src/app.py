@@ -2,6 +2,7 @@ from datetime import datetime as dt
 
 import dash
 import dash_core_components as dcc
+import dash_daq as daq
 import dash_html_components as html
 import pandas as pd
 import plotly.graph_objs as go
@@ -489,7 +490,10 @@ def modal():
 app.layout = html.Div(
     [
         dcc.Interval(id="interval", interval=1 * 1000, n_intervals=0),
-
+        dcc.ConfirmDialog(
+            id='confirm',
+            message='Are you sure?',
+        ),
         html.Div(
             [
                 html.Div(
@@ -528,7 +532,7 @@ app.layout = html.Div(
                         ),
                     ],
                     style={"float": "left", "backgroundColor": "#18252e", "padding": "20px",
-                           "border": "1px solid rgba(68, 149, 209, 0.9)", "width": "318px"},
+                           "border": "1px solid rgba(68, 149, 209, 0.9)", "width": "100%"},
                 ),
                 html.Div(
                     [
@@ -552,7 +556,23 @@ app.layout = html.Div(
                         ),
                     ],
                     style={"float": "left", "backgroundColor": "#18252e", "padding": "20px", "marginTop": "20px",
-                           "border": "1px solid rgba(68, 149, 209, 0.9)"},
+                           "border": "1px solid rgba(68, 149, 209, 0.9)", "width": "100%"},
+                ),
+                html.Div(
+                    [
+                        daq.BooleanSwitch(
+                            on=False,
+                            label=dict(
+                                style={"color": "rgb(69, 223, 126)"},
+                                label="Crawl real-time data"
+                            ),
+                            color="rgb(255, 193, 7)",
+                            labelPosition="top"
+                        )
+
+                    ],
+                    style={"float": "left", "backgroundColor": "#18252e", "padding": "20px", "marginTop": "20px",
+                           "border": "1px solid rgba(68, 149, 209, 0.9)", "width": "100%", "color": "white"},
                 ),
             ],
             className='three columns selection',
@@ -632,6 +652,15 @@ def set_indice_options(selected_indice):
     query = QueryData(mng_client)
     lst_ticket = query.get_list_ticket(index=selected_indice)
     return [{'label': i, 'value': i} for i in lst_ticket]
+
+
+# update history data
+@app.callback(Output('confirm', 'displayed'),
+              [Input('button_chart_crawl', 'n_clicks')])
+def display_confirm(n):
+    if n > 0:
+        return True
+    return False
 
 
 # open or close modal
@@ -849,7 +878,7 @@ def return_analyze_result(n3, alpha, lag, input_data, input_component):
     else:
         df_history = pd.DataFrame(list(db_cm_history.find(
             {
-                "name": input_data
+                "ticket": input_data
             }
         )))
     acf_value, confint_upper_acf, confint_lower_acf = calculate_acf(df_history['close'], lag, alpha)
@@ -1131,16 +1160,20 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
             )))
             df_history = pd.DataFrame(list(db_cm_history.find(
                 {
-                    "name": input_data
+                    "ticket": input_data
                 }
             )))
+
+        print(df_ind['date'])
+        print(df_history['date'])
         df_ind['date'] = df_ind['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
 
         df_ind = df_ind.sort_values(by=['date'])
-        print(df_ind)
         df_history = df_history.sort_values(by=['date'])
+        # df_ind = df_ind.drop_duplicates(keep=False,inplace=True)
+        df_history = df_history.drop_duplicates(['date'], keep='last')
+        print(df_history)
         df_ind['last'] = df_ind['last'].round(4)
-
         if (chart_type == 'line_trace'):
             trace_ind = go.Scatter(
                 x=df_history['date'],

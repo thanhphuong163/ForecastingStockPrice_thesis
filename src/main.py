@@ -3,6 +3,7 @@
 # Created at: 21:56
 import time
 from datetime import datetime
+
 from pymongo import MongoClient
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -55,7 +56,6 @@ def demo():
 	index = 'VN 30 (VNI30)'
 	query = QueryData(dbClient=client)
 	lst_ticket = query.get_list_ticket(index)
-	print(lst_ticket)
 	df = query.get_historical_data(lst_ticket)
 
 	# closed_price = pd.DataFrame()
@@ -97,5 +97,5 @@ if __name__ == '__main__':
 	# query_data = QueryData(dbClient=client)
 	# lst_symbol = query_data.get_list_ticket()
 	# print(lst_symbol)
-	# get_historical_data()
-	demo()
+	get_historical_data()
+# demo()
