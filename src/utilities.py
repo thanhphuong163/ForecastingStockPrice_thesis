@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Project: ForecastingStockPrice_thesis
 # Created at: 21:50
+import itertools
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error, mean_absolute_error
@@ -57,9 +59,11 @@ def evaluation(validation):
 	return result
 
 
-def run_model(time_series: pd.Series, model_selection='ARIMA', start_train=0.85, end_train=0.97,
-              order=(1, 1, 0), lag=2, hidden_layers=(7, 3), steps=60):
+def run_model_with_parameters(time_series: pd.Series, model_selection='ARIMA',
+                              start_train=0.85, end_train=0.97, order=(1, 1, 0),
+                              lag=2, hidden_layers=(7, 3), steps=60):
 	# split data
+	time_series = time_series.sort_index()
 	time_series = time_series.drop_duplicates()
 	size = len(time_series)
 	train_start = int(start_train * size)
@@ -67,22 +71,25 @@ def run_model(time_series: pd.Series, model_selection='ARIMA', start_train=0.85,
 	train, test = time_series[train_start:train_end], time_series[train_end:]
 
 	# Run model
+	result = {}
 	model = None
 	insample_data = None
 	if model_selection == 'ARIMA':
-		model = ArimaModel(time_series, order=order)
+		model = ArimaModel(train, order=order)
 		insample_data = train[1:]
 	elif model_selection == 'ANN':
-		model = AnnModel(time_series, lag=lag, hidden_layers=hidden_layers)
+		model = AnnModel(train, lag=lag, hidden_layers=hidden_layers)
 		insample_data = train[lag + 1:]
 	elif model_selection == 'Hybrid':
-		model = HybridModel(time_series, order=order, lag=lag, hidden_layers=hidden_layers)
+		model = HybridModel(train, order=order, lag=lag, hidden_layers=hidden_layers)
 		insample_data = train[lag + 1:]
+	else:
+		return result
 
-	# Evaluation
-	result = {}
+	# Fit model
 	model.fit()
 
+	# Evaluation
 	train_validate = pd.DataFrame()
 	train_validate['y'] = insample_data
 	train_validate['yhat'] = model.get_insample_prediction()
@@ -95,3 +102,19 @@ def run_model(time_series: pd.Series, model_selection='ARIMA', start_train=0.85,
 	test_result = evaluation(test_validate)
 	result['test_evaluation'] = test_result
 	return result
+
+
+def gen_order(p, d, q):
+	return list(itertools.product(p, d, q))
+
+
+def gen_ann(lags, hl):
+	hl1 = hl
+	hl2 = [int(i / 2) for i in hl]
+	return list(itertools.product(lags, hl1, hl2))
+
+
+def run_model_without_parameter(time_series: pd.Series, model_selection='ARIMA',
+                                p=range(1, 4), d=range(0, 2), q=range(0, 3), lags=range(1, 5),
+                                hl=range(2, 8)):
+	pass

@@ -25,6 +25,7 @@ class QueryData:
 		his_data_coll = self.database[History_data]
 		query = {
 			'name': {'$in': lst_symbol},
+			'date': {}
 		}
 		if start is not None:
 			query['date']['$gte'] = start

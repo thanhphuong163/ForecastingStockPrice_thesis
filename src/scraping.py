@@ -216,7 +216,6 @@ class WebScraping:
 				volume=self.convert_volume(lst_col[5].text),
 				change_per=self.convert_change_per(lst_col[6].text)
 			)
-			print('lst_data')
 			lst_data.append(dct_row)
 		return lst_data
 
@@ -241,9 +240,12 @@ class WebScraping:
 		historical_data_coll = self.database[History_data]
 		historical_data_coll.delete_many({})
 		for ticket in lst_ticket:
+			# Initialize parameters for request
 			payload['curr_id'] = ticket['curr_id']
 			payload['smlID'] = ticket['smlID']
 			payload['header'] = ticket['header']
 			response = requests.post(AJAX_URL, data=payload, headers=urlheader)
 			lst_data = self.parse_historical_data_response(response.content, ticket=ticket)
+
+			# Insert data into database
 			historical_data_coll.insert_many(lst_data)
