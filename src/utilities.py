@@ -143,8 +143,8 @@ def choose_model(lst_result):
 
 
 def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA',
-								 p=range(1, 4), d=range(0, 2), q=range(0, 3),
-								 lags=range(1, 4), hl=range(3, 8)):
+                                 p=range(1, 4), d=range(0, 2), q=range(0, 3),
+                                 lags=range(1, 4), hl=range(3, 8)):
 	# Generate parameters
 	lst_order = gen_order(p, d, q)
 	lst_ann_param = gen_ann(lags, hl)
@@ -154,13 +154,13 @@ def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA'
 	if model_selection == 'ARIMA':
 		for order in lst_order:
 			result = run_model_with_parameters(time_series, model_selection=model_selection,
-											   order=order)
+			                                   order=order)
 			if result['status']:
 				lst_result.append(result)
 	elif model_selection == 'ANN':
 		for ann_param in lst_ann_param:
 			result = run_model_with_parameters(time_series, model_selection=model_selection,
-											   lag=ann_param[0], hidden_layers=ann_param[1:])
+			                                   lag=ann_param[0], hidden_layers=ann_param[1:])
 			if result['status']:
 				lst_result.append(result)
 	elif model_selection == 'Hybrid':
@@ -168,8 +168,8 @@ def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA'
 		lst_arima_result = list()
 		for order in tqdm(lst_order, desc='Choosing ARIMA'):
 			result = run_model_with_parameters(time_series, model_selection=model_selection,
-											   lag=1, hidden_layers=(1, 1),
-											   order=order)
+			                                   lag=1, hidden_layers=(1, 1),
+			                                   order=order)
 			if result['status']:
 				lst_arima_result.append(result)
 		_result = choose_model(lst_arima_result)
@@ -178,8 +178,8 @@ def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA'
 		# Choose the best ANN model
 		for ann_param in tqdm(lst_ann_param, desc='Choosing ANN'):
 			result = run_model_with_parameters(time_series, model_selection=model_selection,
-											   lag=ann_param[0], hidden_layers=ann_param[1:],
-											   order=chosen_order)
+			                                   lag=ann_param[0], hidden_layers=ann_param[1:],
+			                                   order=chosen_order)
 			if result['status']:
 				lst_result.append(result)
 
