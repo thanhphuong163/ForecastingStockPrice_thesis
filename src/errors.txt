@@ -1,13 +1,2 @@
-'date'
-'date'
-'date'
-'date'
-'date'
-'date'
-'date'
-'date'
-'date'
-'date'
-'date'
-'date'
-'date'
+local variable 'df_ind' referenced before assignment
+local variable 'df_ind' referenced before assignment
