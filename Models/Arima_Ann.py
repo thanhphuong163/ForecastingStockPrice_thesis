@@ -56,9 +56,11 @@ class ArimaModel:
 			historical_data.append(test_data[t])
 		return pd.Series(predictions, index=test_data.index).fillna(0)
 
-	def predict_multi_step_ahead(self, steps=5, freq='D'):
+	def predict_multi_step_ahead(self, start=None, steps=5, freq='D'):
 		# Initialize index
-		start = self.historical_data.index[-1] + pd.Timedelta(value=1, unit=freq)
+		if start is None:
+			start = self.historical_data.index[-1] + pd.Timedelta(value=1, unit=freq)
+
 		datetime_index = pd.date_range(start, periods=steps, freq=freq)
 
 		# Get forecasting values
@@ -125,9 +127,10 @@ class AnnModel:
 		predictions = self.scaler.inverse_transform(reshaped_pred)
 		return pd.Series(data=predictions.flatten(), index=testing_data.index)
 
-	def predict_multi_step_ahead(self, steps=5, freq='D'):
+	def predict_multi_step_ahead(self, start=None, steps=5, freq='D'):
 		# Initialize index
-		start = self.historical_data.index[-1] + pd.Timedelta(value=1, unit=freq)
+		if start is None:
+			start = self.historical_data.index[-1] + pd.Timedelta(value=1, unit=freq)
 		datetime_index = pd.date_range(start, periods=steps, freq=freq)
 
 		# Get forecasting values
@@ -173,9 +176,9 @@ class HybridModel:
 		pred_insample = pred_mean + pred_residuals
 		return pred_insample
 
-	def predict_multi_step_ahead(self, steps=5, freq='D'):
-		pred_mean = self.arima_model.predict_multi_step_ahead(steps, freq)
-		pred_residuals = self.ann_model.predict_multi_step_ahead(steps, freq)
+	def predict_multi_step_ahead(self, start=None, steps=5, freq='D'):
+		pred_mean = self.arima_model.predict_multi_step_ahead(start=start, steps=steps, freq=freq)
+		pred_residuals = self.ann_model.predict_multi_step_ahead(start=start, steps=steps, freq=freq)
 		predictions = pred_mean + pred_residuals
 		return predictions
 

@@ -1086,7 +1086,7 @@ def render_content(tab):
                                 }
                             ),
                             html.P(
-                                "TIME",
+                                "NUMBER OF MONTHS",
                                 style={
                                     "color": "white",
                                     "marginBottom": "0",
@@ -1095,11 +1095,28 @@ def render_content(tab):
                             dcc.Dropdown(
                                 id='select_time_test',
                                 options=[
-                                    {"label": "1 month", "value": "1 month"},
-                                    {"label": "2 month", "value": "2 month"},
-                                    {"label": "3 month", "value": "3 month"},
+                                    {"label": "1 month(s)", "value": 1},
+                                    {"label": "2 month(s)", "value": 2},
+                                    {"label": "3 month(s)", "value": 3},
                                 ],
-                                value="1 month",
+                                value=1,
+                                style={
+                                    "backgroundColor": "#18252E",
+                                    "color": "white",
+                                    "borderColor": "rgba(68,149,209,.9)",
+                                    "width": "50%",
+                                    "marginTop": "5px"
+                                }
+                            ),
+                            dcc.Dropdown(
+                                id='select_time_train',
+                                options=[
+                                    {"label": "1 month(s)", "value": 1},
+                                    {"label": "3 month(s)", "value": 3},
+                                    {"label": "6 month(s)", "value": 6},
+                                    {"label": "1 year(s)", "value": 12},
+                                ],
+                                value=1,
                                 style={
                                     "backgroundColor": "#18252E",
                                     "color": "white",
@@ -1392,27 +1409,52 @@ def choose_parameters_HYBRID(model):
 # validation
 @app.callback(Output('result-test', 'children'),
               [
+                  Input("select_time_test", "value"),
+                  Input("select_time_train", "value"),
                   Input("input", "value"),
                   Input('indice-component', 'value'),
                   Input("analyze_button", "n_clicks")
               ])
-def graph_validation(selected_indice, selected_stock, n):
-    start = dt.today() - relativedelta(months=1)
+def graph_validation(selected_time_test, selected_time_train, selected_indice, selected_stock, n):
+    query = QueryData(mng_client)
+    start_test = dt.today() - relativedelta(months=selected_time_test)
+    start_train = start_test - relativedelta(months=selected_time_train)
     end = dt.today()
     if n > 0:
-        query = QueryData(mng_client)
         if selected_stock is not None:
-            df_stock = query.get_historical_data([selected_stock], start, end)
+            df_stock_test = query.get_historical_data([selected_stock], start_test, end)
+            df_stock_train = query.get_historical_data([selected_stock], start=start_train, end=start_test)
         else:
-            df_stock = query.get_historical_data([selected_indice], start, end)
-        figure = go.Scatter(
-            x=df_stock.index,
-            y=df_stock['close'],
+            df_stock_test = query.get_historical_data([selected_indice], start_test, end)
+            df_stock_train = query.get_historical_data([selected_indice], start=start_train, end=start_test)
+
+        trace_stock_train = go.Scatter(
+            x=df_stock_train.index,
+            y=df_stock_train['close'],
             mode='lines',
-            name=selected_indice
+            line=dict(color='#5fba7d'),
+            name="in-sample data"
         )
+        trace_stock_test = go.Scatter(
+            x=df_stock_test.index,
+            y=df_stock_test['close'],
+            mode='lines',
+            line=dict(color='red'),
+            name="validation data"
+        )
+
+        figure = tools.make_subplots(
+            rows=1,
+            cols=1,
+        )
+        figure.append_trace(trace_stock_train, 1, 1)
+        figure.append_trace(trace_stock_test, 1, 1)
+        figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
+        figure['layout'].update(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
+
         return dcc.Graph(
             figure=figure,
+            style={'width': '500px'}
         )
 
 # reset analyze result
