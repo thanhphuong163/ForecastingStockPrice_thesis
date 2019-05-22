@@ -190,11 +190,11 @@ class WebScraping:
 			print(current)
 			if current - start < SCRAPING_TIME:
 				self.scraping()
-			# await asyncio.sleep(SLEEP_TIME)
 			else:
 				self.organize_data()
 				start = time.time()
 			print(start)
+
 	def parse_historical_data_response(self, response, ticket):
 		"""
 		To parse html doc into list of dict

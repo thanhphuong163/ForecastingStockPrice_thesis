@@ -11,6 +11,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 from statsmodels.tsa.stattools import pacf, acf
+from tqdm import tqdm_notebook as tqdm
 
 from Models.Arima_Ann import HybridModel, AnnModel, ArimaModel
 from src.config_tickets import ticket_lst
@@ -80,33 +81,44 @@ def run_model_with_parameters(time_series: pd.Series, model_selection='ARIMA',
 	result = {}
 	model = None
 	insample_data = None
-	if model_selection == 'ARIMA':
-		model = ArimaModel(train, order=order)
-		insample_data = train[1:]
-	elif model_selection == 'ANN':
-		model = AnnModel(train, lag=lag, hidden_layers=hidden_layers)
-		insample_data = train[lag + 1:]
-	elif model_selection == 'Hybrid':
-		model = HybridModel(train, order=order, lag=lag, hidden_layers=hidden_layers)
-		insample_data = train[lag + 1:]
-	else:
-		return result
+	try:
+		if model_selection == 'ARIMA':
+			model = ArimaModel(train, order=order)
+			insample_data = train[1:]
+			result['order'] = order
+		elif model_selection == 'ANN':
+			model = AnnModel(train, lag=lag, hidden_layers=hidden_layers)
+			insample_data = train[lag + 1:]
+			result['lag'] = lag
+			result['hidden_layers'] = hidden_layers
+		elif model_selection == 'Hybrid':
+			model = HybridModel(train, order=order, lag=lag, hidden_layers=hidden_layers)
+			insample_data = train[lag + 1:]
+			result['order'] = order
+			result['lag'] = lag
+			result['hidden_layers'] = hidden_layers
 
-	# Fit model
-	model.fit()
+		# Fit model
+		model.fit()
 
-	# Evaluation
-	train_validate = pd.DataFrame()
-	train_validate['y'] = insample_data
-	train_validate['yhat'] = model.get_insample_prediction()
-	train_result = evaluation(train_validate)
-	result['train_evaluation'] = train_result
+		# Evaluation
+		train_validate = pd.DataFrame()
+		train_validate['y'] = insample_data
+		train_validate['yhat'] = model.get_insample_prediction()
+		train_result = evaluation(train_validate)
+		result['train_evaluation'] = train_result
 
-	test_validate = pd.DataFrame()
-	test_validate['y'] = test
-	test_validate['yhat'] = model.validate(test)
-	test_result = evaluation(test_validate)
-	result['test_evaluation'] = test_result
+		test_validate = pd.DataFrame()
+		test_validate['y'] = test
+		test_validate['yhat'] = model.validate(test)
+		test_result = evaluation(test_validate)
+		result['test_evaluation'] = test_result
+		result['status'] = True
+		result['model_name'] = model_selection
+		result['model'] = model
+	except:
+		result['status'] = False
+
 	return result
 
 
@@ -120,10 +132,61 @@ def gen_ann(lags, hl):
 	return list(itertools.product(lags, hl1, hl2))
 
 
-def run_model_without_parameter(time_series: pd.Series, model_selection='ARIMA',
-                                p=range(1, 4), d=range(0, 2), q=range(0, 3), lags=range(1, 5),
-                                hl=range(2, 8)):
-	pass
+def choose_model(lst_result):
+	mae = lst_result[0]['test_evaluation']['mae']
+	result_selection = lst_result[0]
+	for result in lst_result[1:]:
+		if mae > result['test_evaluation']['mae']:
+			mae = result['test_evaluation']['mae']
+			result_selection = result
+	return result_selection
+
+
+def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA',
+                                 p=range(1, 4), d=range(0, 2), q=range(0, 3),
+                                 lags=range(1, 4), hl=range(3, 8)):
+	# Generate parameters
+	lst_order = gen_order(p, d, q)
+	lst_ann_param = gen_ann(lags, hl)
+
+	# Run model
+	lst_result = list()
+	if model_selection == 'ARIMA':
+		for order in lst_order:
+			result = run_model_with_parameters(time_series, model_selection=model_selection,
+			                                   order=order)
+			if result['status']:
+				lst_result.append(result)
+	elif model_selection == 'ANN':
+		for ann_param in lst_ann_param:
+			result = run_model_with_parameters(time_series, model_selection=model_selection,
+			                                   lag=ann_param[0], hidden_layers=ann_param[1:])
+			if result['status']:
+				lst_result.append(result)
+	elif model_selection == 'Hybrid':
+		# Choose the best ARIMA model
+		lst_arima_result = list()
+		for order in tqdm(lst_order, desc='Choosing ARIMA'):
+			result = run_model_with_parameters(time_series, model_selection=model_selection,
+			                                   lag=1, hidden_layers=(1, 1),
+			                                   order=order)
+			if result['status']:
+				lst_arima_result.append(result)
+		_result = choose_model(lst_arima_result)
+		chosen_order = _result['order']
+
+		# Choose the best ANN model
+		for ann_param in tqdm(lst_ann_param, desc='Choosing ANN'):
+			result = run_model_with_parameters(time_series, model_selection=model_selection,
+			                                   lag=ann_param[0], hidden_layers=ann_param[1:],
+			                                   order=chosen_order)
+			if result['status']:
+				lst_result.append(result)
+
+	# Model selection: model is selected based on MAE of test result
+	result_selection = choose_model(lst_result)
+
+	return result_selection, lst_result
 
 
 def request_2_website():

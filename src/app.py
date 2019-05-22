@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime as dt
 
 import dash
@@ -1155,12 +1154,14 @@ def get_component_information(selected_component):
               [Input('my-boolean-switch', 'on')])
 def update_live_graph(on):
     if on:
-        loop.run_forever()
-        return ''
+        pool.apply_async(scraper.start_scraping)
+        pool.join()
+        pool.close()
     else:
-        print('Stop scraping.')
-        loop.stop()
-        return ''
+        pool.terminate()
+        print('stop scraping')
+    return None
+
 
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
@@ -1329,6 +1330,4 @@ if __name__ == '__main__':
     driver_lst = request_2_website()
     scraper = WebScraping(driver_lst=driver_lst, dbClient=mng_client, verbose=True)
 
-    loop = asyncio.get_event_loop()
-    asyncio.ensure_future(scraper.start_scraping())
     app.run_server(debug=True)
