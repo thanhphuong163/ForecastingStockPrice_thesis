@@ -9,6 +9,7 @@ import pandas as pd
 import plotly.graph_objs as go
 import pymongo
 from dash.dependencies import Output, Input, Event, State
+from dateutil.relativedelta import relativedelta
 from plotly import tools
 from pymongo import MongoClient
 
@@ -999,7 +1000,7 @@ def render_content(tab):
                 className="row",
             ),
             html.Div(
-                id="analyze_result",
+                id="result",
             ),
         ])
     elif tab == 'tab-analyze':
@@ -1066,7 +1067,7 @@ def render_content(tab):
                 className="row",
             ),
             html.Div(
-                id="result",
+                id="analyze_result",
             ),
         ])
     elif tab == 'tab-validation':
@@ -1387,6 +1388,32 @@ def choose_parameters_HYBRID(model):
     else:
         return {'display': 'none'}
 
+
+# validation
+@app.callback(Output('result-test', 'children'),
+              [
+                  Input("input", "value"),
+                  Input('indice-component', 'value'),
+                  Input("analyze_button", "n_clicks")
+              ])
+def graph_validation(selected_indice, selected_stock, n):
+    start = dt.today() - relativedelta(months=1)
+    end = dt.today()
+    if n > 0:
+        query = QueryData(mng_client)
+        if selected_stock is not None:
+            df_stock = query.get_historical_data([selected_stock], start, end)
+        else:
+            df_stock = query.get_historical_data([selected_indice], start, end)
+        figure = go.Scatter(
+            x=df_stock.index,
+            y=df_stock['close'],
+            mode='lines',
+            name=selected_indice
+        )
+        return dcc.Graph(
+            figure=figure,
+        )
 
 # reset analyze result
 @app.callback(
