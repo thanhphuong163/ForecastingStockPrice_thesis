@@ -66,16 +66,16 @@ def evaluation(validation):
 	return result
 
 
-def run_model_with_parameters(time_series: pd.Series, model_selection='ARIMA',
-                              start_train=0.85, end_train=0.97, order=(1, 1, 0),
-                              lag=2, hidden_layers=(7, 3), steps=60):
+def run_model_with_parameters(train: pd.Series, test: pd.Series,
+                              model_selection='ARIMA', order=(1, 1, 0),
+                              lag=2, hidden_layers=(7, 3)):
 	# split data
-	time_series = time_series.sort_index()
-	time_series = time_series.drop_duplicates()
-	size = len(time_series)
-	train_start = int(start_train * size)
-	train_end = int(end_train * size)
-	train, test = time_series[train_start:train_end], time_series[train_end:]
+	# time_series = time_series.sort_index()
+	# time_series = time_series.drop_duplicates()
+	# size = len(time_series)
+	# train_start = int(start_train * size)
+	# train_end = int(end_train * size)
+	# train, test = time_series[train_start:train_end], time_series[train_end:]
 
 	# Run model
 	result = {}
@@ -142,7 +142,7 @@ def choose_model(lst_result):
 	return result_selection
 
 
-def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA',
+def run_model_without_parameters(train: pd.Series, test: pd.Series, model_selection='ARIMA',
                                  p=range(1, 4), d=range(0, 2), q=range(0, 3),
                                  lags=range(1, 4), hl=range(3, 8)):
 	# Generate parameters
@@ -153,13 +153,13 @@ def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA'
 	lst_result = list()
 	if model_selection == 'ARIMA':
 		for order in lst_order:
-			result = run_model_with_parameters(time_series, model_selection=model_selection,
+			result = run_model_with_parameters(train, test, model_selection=model_selection,
 			                                   order=order)
 			if result['status']:
 				lst_result.append(result)
 	elif model_selection == 'ANN':
 		for ann_param in lst_ann_param:
-			result = run_model_with_parameters(time_series, model_selection=model_selection,
+			result = run_model_with_parameters(train, test, model_selection=model_selection,
 			                                   lag=ann_param[0], hidden_layers=ann_param[1:])
 			if result['status']:
 				lst_result.append(result)
@@ -167,7 +167,7 @@ def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA'
 		# Choose the best ARIMA model
 		lst_arima_result = list()
 		for order in tqdm(lst_order, desc='Choosing ARIMA'):
-			result = run_model_with_parameters(time_series, model_selection=model_selection,
+			result = run_model_with_parameters(train, test, model_selection=model_selection,
 			                                   lag=1, hidden_layers=(1, 1),
 			                                   order=order)
 			if result['status']:
@@ -177,7 +177,7 @@ def run_model_without_parameters(time_series: pd.Series, model_selection='ARIMA'
 
 		# Choose the best ANN model
 		for ann_param in tqdm(lst_ann_param, desc='Choosing ANN'):
-			result = run_model_with_parameters(time_series, model_selection=model_selection,
+			result = run_model_with_parameters(train, test, model_selection=model_selection,
 			                                   lag=ann_param[0], hidden_layers=ann_param[1:],
 			                                   order=chosen_order)
 			if result['status']:
