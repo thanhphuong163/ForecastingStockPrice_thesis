@@ -502,7 +502,7 @@ app.layout = html.Div(
         dcc.Interval(id="interval", interval=1 * 1000, n_intervals=0),
         dcc.ConfirmDialog(
             id='confirm',
-            message='Do you really want to update history data?',
+            message='Update historical data successfully',
         ),
         html.Div(id='confirm-output', style={'display': 'none'}),
         html.Div(
@@ -675,19 +675,20 @@ def set_indice_options(selected_indice):
               [Input('button_chart_crawl', 'n_clicks')])
 def display_confirm(n):
     if n > 0:
+        print('checking...')
+        update_database(mng_client)
+        print('checked')
         return True
     return False
 
 
-app.callback(Output('confirm-output', 'children'),
+app.callback(Output('confirm-output', 'style'),
              [Input('confirm', 'submit_n_clicks')])
 def update_history_data(submit_n_clicks):
-    if not submit_n_clicks:
-        return ''
+    if submit_n_clicks:
+        return {'display': 'none'}
     else:
-        mng_client = MongoClient(HOST)
-        update_database(mng_client)
-        return ''
+        return {'display': 'none'}
 
 # open or close modal
 @app.callback(
@@ -1104,7 +1105,7 @@ def render_content(tab):
                                     "backgroundColor": "#18252E",
                                     "color": "white",
                                     "borderColor": "rgba(68,149,209,.9)",
-                                    "width": "50%",
+                                    "width": "100%",
                                     "marginTop": "5px"
                                 }
                             ),
@@ -1121,7 +1122,7 @@ def render_content(tab):
                                     "backgroundColor": "#18252E",
                                     "color": "white",
                                     "borderColor": "rgba(68,149,209,.9)",
-                                    "width": "50%",
+                                    "width": "100%",
                                     "marginTop": "5px"
                                 }
                             )
@@ -1409,25 +1410,26 @@ def choose_parameters_HYBRID(model):
 # validation
 @app.callback(Output('result-test', 'children'),
               [
+                  Input("analyze_button", "n_clicks"),
                   Input("select_time_test", "value"),
                   Input("select_time_train", "value"),
                   Input("input", "value"),
                   Input('indice-component', 'value'),
-                  Input("analyze_button", "n_clicks")
               ])
-def graph_validation(selected_time_test, selected_time_train, selected_indice, selected_stock, n):
+def graph_validation(n, selected_time_test, selected_time_train, selected_indice, selected_stock):
     query = QueryData(mng_client)
     start_test = dt.today() - relativedelta(months=selected_time_test)
     start_train = start_test - relativedelta(months=selected_time_train)
     end = dt.today()
-    if n > 0:
-        if selected_stock is not None:
-            df_stock_test = query.get_historical_data([selected_stock], start_test, end)
-            df_stock_train = query.get_historical_data([selected_stock], start=start_train, end=start_test)
-        else:
-            df_stock_test = query.get_historical_data([selected_indice], start_test, end)
-            df_stock_train = query.get_historical_data([selected_indice], start=start_train, end=start_test)
+    if selected_stock is not None:
+        df_stock_test = query.get_historical_data([selected_stock], start_test, end)
+        df_stock_train = query.get_historical_data([selected_stock], start=start_train, end=start_test)
+    else:
+        df_stock_test = query.get_historical_data([selected_indice], start_test, end)
+        df_stock_train = query.get_historical_data([selected_indice], start=start_train, end=start_test)
 
+    print('validation..')
+    if n > 0:
         trace_stock_train = go.Scatter(
             x=df_stock_train.index,
             y=df_stock_train['close'],
@@ -1446,15 +1448,17 @@ def graph_validation(selected_time_test, selected_time_train, selected_indice, s
         figure = tools.make_subplots(
             rows=1,
             cols=1,
+            print_grid=False
         )
         figure.append_trace(trace_stock_train, 1, 1)
         figure.append_trace(trace_stock_test, 1, 1)
         figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
-        figure['layout'].update(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
+        figure['layout'] = dict(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
 
         return dcc.Graph(
+            id='validation-graph',
             figure=figure,
-            style={'width': '500px'}
+            style={'margin': 'auto 5%'}
         )
 
 # reset analyze result
@@ -1484,8 +1488,8 @@ def reset_analyze_result(n, n2):
     ]
 )
 def return_analyze_result(n3, alpha, lag, input_data, input_component):
-    mng_client = MongoClient(HOST)
-    mng_db = mng_client[DATABASE]
+    # mng_client = MongoClient(HOST)
+    # mng_db = mng_client[DATABASE]
     db_cm_history = mng_db[History_data]
     db_cm_component = mng_db[CompoColl]
     if input_component is not None:
@@ -1502,6 +1506,7 @@ def return_analyze_result(n3, alpha, lag, input_data, input_component):
         )))
     acf_value, confint_upper_acf, confint_lower_acf = calculate_acf(df_history['close'], lag, alpha)
     pacf_value, confint_upper_pacf, confint_lower_pacf = calculate_pacf(df_history['close'], lag, alpha)
+    print('acf...')
     if n3 > 0:
         trace_confint_upper_acf = go.Scatter(
             y=confint_upper_acf,
@@ -1711,18 +1716,17 @@ from tornado.platform.asyncio import AnyThreadEventLoopPolicy
 asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
 
 # run real-time graph
-# @app.callback(Output('hide-switch', 'children'),
-#               [Input('my-boolean-switch', 'on')])
-# def update_live_graph(on):
-#     loop = asyncio.get_running_loop()
-#     if on:
-#         loop.run_forever()
-#         return ''
-#     else:
-#         print('Stop scraping.')
-#         loop.close()
-#         print('checked')
-#         return ''
+@app.callback(Output('hide-switch', 'children'),
+              [Input('my-boolean-switch', 'on')])
+def update_live_graph(on):
+    if on:
+        loop.run_forever()
+        return ''
+    else:
+        print('Stop scraping.')
+        loop.stop()
+        print('checked')
+        return ''
 
 @app.callback(Output('output', 'children'),
               [Input('input', 'value'),
@@ -1767,6 +1771,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
         df_history = df_history.sort_values(by=['date'])
         # df_ind = df_ind.drop_duplicates(keep=False,inplace=True)
         df_history = df_history.drop_duplicates(['date'], keep='last')
+        print(df_ind['last'][0])
         df_ind['last'] = df_ind['last'].round(4)
         if (chart_type == 'line_trace'):
             trace_ind = go.Scatter(
@@ -1869,6 +1874,14 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                 visible=False
             ),
             type='date',
+        )
+        # figure['layout']['xaxis2'] = dict(
+        #     range=[df_history['date'][0], df_history['date'][3]],
+        #     domain=[0.55, 1]
+        #     )
+        figure['layout']['yaxis2'] = dict(
+            range=[min(df_history['close']), max(df_history['close'])],
+            domain=[0, 0.45]
         )
         return dcc.Graph(
             id='example-graph',

@@ -33,10 +33,6 @@ class QueryData:
 			query['date']['$lte'] = end
 		cursor = his_data_coll.find(query)
 		df = pd.DataFrame(data=list(cursor))
-		print(lst_symbol)
-		print(df)
-		print(start)
-		print(end)
 		df = df.drop(['_id'], axis=1)
 		df = df.set_index('date')
 		return df
