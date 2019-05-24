@@ -16,7 +16,7 @@ from pymongo import MongoClient
 from src.query_data import QueryData
 from src.scraping import WebScraping
 from src.settings import DATABASE, IndColl, INDICES_LST, HOST, Indice_options, History_data, CompoColl
-from src.utilities import calculate_acf, calculate_pacf, update_database, request_2_website
+from src.utilities import calculate_acf, calculate_pacf, update_database, request_2_website, run_model_with_parameters
 
 Stock_name = INDICES_LST
 
@@ -24,9 +24,10 @@ timing = [
 
 ]
 
-model = ["ARIMA", "ANN", "HYBRID", "LSTM"]
+model = ["ARIMA", "ANN", "Hybrid", "LSTM"]
 
-
+evaluation = ["Mean squared error", "Root mean squared error", "Mean absolute error", "Mean absolute percentage error"]
+evaluation_test = ["mse", "rmse", "mae", "mape"]
 # database
 
 
@@ -1167,9 +1168,9 @@ def render_content(tab):
                                     dcc.Input(
                                         id='p-order-test',
                                         type='number',
-                                        min=1,
+                                        min=0,
                                         step=1,
-                                        value=1,
+                                        placeholder='auto',
                                         style={'width': '20%'}
                                     ),
                                     html.P(
@@ -1182,9 +1183,9 @@ def render_content(tab):
                                     dcc.Input(
                                         id='d-order-test',
                                         type='number',
-                                        min=1,
+                                        min=0,
                                         step=1,
-                                        value=1,
+                                        placeholder='auto',
                                         style={'width': '20%'}
                                     ),
                                     html.P(
@@ -1197,14 +1198,14 @@ def render_content(tab):
                                     dcc.Input(
                                         id='q-order-test',
                                         type='number',
-                                        min=1,
+                                        min=0,
                                         step=1,
-                                        value=1,
+                                        placeholder='auto',
                                         style={'width': '20%'}
                                     )
                                 ],
                                 style={'display': 'none'},
-                                id='ARIMA'
+                                id='ARIMA-test'
                             ),
                             html.Div(
                                 [
@@ -1220,7 +1221,7 @@ def render_content(tab):
                                         type='number',
                                         min=1,
                                         step=1,
-                                        value=2,
+                                        placeholder='auto',
                                         style={'width': '20%'}
                                     ),
                                     html.P(
@@ -1235,7 +1236,7 @@ def render_content(tab):
                                         type='number',
                                         min=1,
                                         step=1,
-                                        value=1,
+                                        placeholder='auto',
                                         style={'width': '20%'}
                                     ),
                                     html.P(
@@ -1250,12 +1251,12 @@ def render_content(tab):
                                         type='number',
                                         min=1,
                                         step=1,
-                                        value=1,
+                                        placeholder='auto',
                                         style={'width': '20%'}
                                     )
                                 ],
                                 style={'display': 'none'},
-                                id='ANN'
+                                id='ANN-test'
                             ),
                             html.Div(
                                 [
@@ -1271,9 +1272,9 @@ def render_content(tab):
                                             dcc.Input(
                                                 id='p-order1-test',
                                                 type='number',
-                                                min=1,
+                                                min=0,
                                                 step=1,
-                                                value=1,
+                                                placeholder='auto',
                                                 style={'width': '50%'}
                                             ),
                                             html.P(
@@ -1286,9 +1287,9 @@ def render_content(tab):
                                             dcc.Input(
                                                 id='d-order1-test',
                                                 type='number',
-                                                min=1,
+                                                min=0,
                                                 step=1,
-                                                value=1,
+                                                placeholder='auto',
                                                 style={'width': '50%'}
                                             ),
                                             html.P(
@@ -1301,9 +1302,9 @@ def render_content(tab):
                                             dcc.Input(
                                                 id='q-order1-test',
                                                 type='number',
-                                                min=1,
+                                                min=0,
                                                 step=1,
-                                                value=1,
+                                                placeholder='auto',
                                                 style={'width': '50%'}
                                             )
                                         ],
@@ -1323,7 +1324,7 @@ def render_content(tab):
                                                 type='number',
                                                 min=1,
                                                 step=1,
-                                                value=2,
+                                                placeholder='auto',
                                                 style={'width': '50%'}
                                             ),
                                             html.P(
@@ -1338,7 +1339,7 @@ def render_content(tab):
                                                 type='number',
                                                 min=1,
                                                 step=1,
-                                                value=1,
+                                                placeholder='auto',
                                                 style={'width': '50%'}
                                             ),
                                             html.P(
@@ -1353,7 +1354,7 @@ def render_content(tab):
                                                 type='number',
                                                 min=1,
                                                 step=1,
-                                                value=1,
+                                                placeholder='auto',
                                                 style={'width': '50%'}
                                             )
                                         ],
@@ -1361,7 +1362,7 @@ def render_content(tab):
                                     )
                                 ],
                                 style={'display': 'none'},
-                                id='HYBRID'
+                                id='HYBRID-test'
                             )
                         ],
                         id="right_div",
@@ -1376,6 +1377,9 @@ def render_content(tab):
             html.Div(
                 id="result-test",
             ),
+            html.Div(
+                id="evaluation-table",
+            )
         ])
 
 
@@ -1401,11 +1405,38 @@ def choose_parameters_ANN(model):
 @app.callback(Output('HYBRID', 'style'),
               [Input('select_model', 'value')])
 def choose_parameters_HYBRID(model):
-    if model == 'HYBRID':
+    if model == 'Hybrid':
         return {'display': 'block'}
     else:
         return {'display': 'none'}
 
+
+# choose parameters for validation
+@app.callback(Output('ARIMA-test', 'style'),
+              [Input('select_model_test', 'value')])
+def choose_parameters_ARIMA_validation(model):
+    if model == 'ARIMA':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(Output('ANN-test', 'style'),
+              [Input('select_model_test', 'value')])
+def choose_parameters_ANN_validation(model):
+    if model == 'ANN':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+@app.callback(Output('HYBRID-test', 'style'),
+              [Input('select_model_test', 'value')])
+def choose_parameters_HYBRID(model):
+    if model == 'Hybrid':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
 
 # validation
 @app.callback(Output('result-test', 'children'),
@@ -1415,8 +1446,40 @@ def choose_parameters_HYBRID(model):
                   Input("select_time_train", "value"),
                   Input("input", "value"),
                   Input('indice-component', 'value'),
+                  Input('select_model_test', 'value'),
+                  Input('p-order-test', 'value'),
+                  Input('d-order-test', 'value'),
+                  Input('q-order-test', 'value'),
+                  Input('lag-order-test', 'value'),
+                  Input('hidden-layer1-test', 'value'),
+                  Input('hidden-layer2-test', 'value'),
+                  Input('p-order1-test', 'value'),
+                  Input('d-order1-test', 'value'),
+                  Input('q-order1-test', 'value'),
+                  Input('lag-order1-test', 'value'),
+                  Input('hidden-layer3-test', 'value'),
+                  Input('hidden-layer4-test', 'value'),
               ])
-def graph_validation(n, selected_time_test, selected_time_train, selected_indice, selected_stock):
+def graph_validation(
+        n,
+        selected_time_test,
+        selected_time_train,
+        selected_indice,
+        selected_stock,
+        selected_model_test,
+        p_arima,
+        d_arima,
+        q_arima,
+        lag_ann,
+        hid1_ann,
+        hid2_ann,
+        p_hybrid,
+        d_hybrid,
+        q_hybrid,
+        lag_hybrid,
+        hid1_hybrid,
+        hid2_hybrid,
+):
     query = QueryData(mng_client)
     start_test = dt.today() - relativedelta(months=selected_time_test)
     start_train = start_test - relativedelta(months=selected_time_train)
@@ -1427,9 +1490,43 @@ def graph_validation(n, selected_time_test, selected_time_train, selected_indice
     else:
         df_stock_test = query.get_historical_data([selected_indice], start_test, end)
         df_stock_train = query.get_historical_data([selected_indice], start=start_train, end=start_test)
+    lag = None
+    hid1 = None
+    hid2 = None
+    if selected_model_test == 'ANN':
+        lag = lag_ann
+        hid1 = hid1_ann
+        hid2 = hid2_ann
+    elif selected_model_test == 'Hybrid':
+        lag = lag_hybrid
+        hid1 = hid1_hybrid
+        hid2 = hid2_hybrid
 
-    print('validation..')
+    result = run_model_with_parameters(
+        df_stock_train['close'],
+        df_stock_test['close'],
+        selected_model_test,
+        order=(p_arima, d_arima, q_arima),
+        lag=lag,
+        hidden_layers=(hid1, hid2)
+    )
+
+    if result['status']:
+        model = result['model']
+        test_evaluation = result['test_evaluation']
+        validation = model.validate(df_stock_test['close'])
+
+    print("checking ...")
+    print(validation)
     if n > 0:
+        trace_validation = go.Scatter(
+            x=validation.index,
+            y=validation,
+            mode='lines',
+            line=dict(color='#ff9354'),
+            name='validation'
+        )
+
         trace_stock_train = go.Scatter(
             x=df_stock_train.index,
             y=df_stock_train['close'],
@@ -1452,6 +1549,7 @@ def graph_validation(n, selected_time_test, selected_time_train, selected_indice
         )
         figure.append_trace(trace_stock_train, 1, 1)
         figure.append_trace(trace_stock_test, 1, 1)
+        figure.append_trace(trace_validation, 1, 1)
         figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
         figure['layout'] = dict(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
 
@@ -1461,6 +1559,113 @@ def graph_validation(n, selected_time_test, selected_time_train, selected_indice
             style={'margin': 'auto 5%'}
         )
 
+
+# print evaluation table
+@app.callback(Output("evaluation-table", "children"),
+              [
+                  Input("analyze_button", "n_clicks"),
+                  Input("select_time_test", "value"),
+                  Input("select_time_train", "value"),
+                  Input("input", "value"),
+                  Input('indice-component', 'value'),
+                  Input('select_model_test', 'value'),
+                  Input('p-order-test', 'value'),
+                  Input('d-order-test', 'value'),
+                  Input('q-order-test', 'value'),
+                  Input('lag-order-test', 'value'),
+                  Input('hidden-layer1-test', 'value'),
+                  Input('hidden-layer2-test', 'value'),
+                  Input('p-order1-test', 'value'),
+                  Input('d-order1-test', 'value'),
+                  Input('q-order1-test', 'value'),
+                  Input('lag-order1-test', 'value'),
+                  Input('hidden-layer3-test', 'value'),
+                  Input('hidden-layer4-test', 'value'),
+              ]
+              )
+def print_evluation_table(
+        n,
+        selected_time_test,
+        selected_time_train,
+        selected_indice,
+        selected_stock,
+        selected_model_test,
+        p_arima,
+        d_arima,
+        q_arima,
+        lag_ann,
+        hid1_ann,
+        hid2_ann,
+        p_hybrid,
+        d_hybrid,
+        q_hybrid,
+        lag_hybrid,
+        hid1_hybrid,
+        hid2_hybrid,
+):
+    query = QueryData(mng_client)
+    start_test = dt.today() - relativedelta(months=selected_time_test)
+    start_train = start_test - relativedelta(months=selected_time_train)
+    end = dt.today()
+    if selected_stock is not None:
+        df_stock_test = query.get_historical_data([selected_stock], start_test, end)
+        df_stock_train = query.get_historical_data([selected_stock], start=start_train, end=start_test)
+    else:
+        df_stock_test = query.get_historical_data([selected_indice], start_test, end)
+        df_stock_train = query.get_historical_data([selected_indice], start=start_train, end=start_test)
+    lag = None
+    hid1 = None
+    hid2 = None
+    if selected_model_test == 'ANN':
+        lag = lag_ann
+        hid1 = hid1_ann
+        hid2 = hid2_ann
+    elif selected_model_test == 'Hybrid':
+        lag = lag_hybrid
+        hid1 = hid1_hybrid
+        hid2 = hid2_hybrid
+
+    result = run_model_with_parameters(
+        df_stock_train['close'],
+        df_stock_test['close'],
+        selected_model_test,
+        order=(p_arima, d_arima, q_arima),
+        lag=lag,
+        hidden_layers=(hid1, hid2)
+    )
+
+    if result['status']:
+        model = result['model']
+        test_evaluation = result['test_evaluation']
+        validation = model.validate(df_stock_test['close'])
+
+    if n > 0:
+        trace_table = go.Table(
+            header=dict(
+                values=evaluation,
+                fill=dict(color='#C2D4FF'),
+                align=['left'] * 5
+            ),
+            cells=dict(
+                values=[test_evaluation[i] for i in evaluation_test],
+                fill=dict(color='#F5F8FF'),
+                align=['left'] * 5)
+        )
+        data = [trace_table]
+        return html.Table(
+            # Header
+            [html.Tr([html.Th(eval) for eval in evaluation])] +
+
+            # Body
+            [
+                html.Tr(
+                    [
+                        html.Td(test_evaluation[col].round(4))
+                        for col in evaluation_test
+                    ]
+                )
+            ]
+        )
 # reset analyze result
 @app.callback(
     Output("analyze_button", "n_clicks"),
