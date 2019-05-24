@@ -1493,6 +1493,10 @@ def graph_validation(
     lag = None
     hid1 = None
     hid2 = None
+
+    # Sort dataframe
+    df_stock_test = df_stock_test.sort_index()
+    df_stock_train = df_stock_train.sort_index()
     if selected_model_test == 'ANN':
         lag = lag_ann
         hid1 = hid1_ann
@@ -1512,9 +1516,9 @@ def graph_validation(
     )
 
     if result['status']:
-        model = result['model']
+        # model = result['model']
         test_evaluation = result['test_evaluation']
-        validation = model.validate(df_stock_test['close'])
+        validation = result['model'].validate(df_stock_test['close'])
 
     print("checking ...")
     print(validation)
@@ -1583,7 +1587,7 @@ def graph_validation(
                   Input('hidden-layer4-test', 'value'),
               ]
               )
-def print_evluation_table(
+def print_evaluation_table(
         n,
         selected_time_test,
         selected_time_train,
@@ -1635,9 +1639,9 @@ def print_evluation_table(
     )
 
     if result['status']:
-        model = result['model']
+        # model = result['model']
         test_evaluation = result['test_evaluation']
-        validation = model.validate(df_stock_test['close'])
+        validation = model['model'].validate(df_stock_test['close'])
 
     if n > 0:
         trace_table = go.Table(
