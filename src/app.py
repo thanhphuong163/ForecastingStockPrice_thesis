@@ -214,7 +214,7 @@ external_stylesheets = [
     "https://cdn.rawgit.com/amadoukane96/8f29daabc5cacb0b7e77707fc1956373/raw/854b1dc5d8b25cd2c36002e1e4f598f5f4ebeee3/test.css",
     "https://use.fontawesome.com/releases/v5.2.0/css/all.css",
     "https://npmcdn.com/react-select@1.0.0-beta13/dist/react-select.css",
-    'https://codepen.io/vantienduclqd/pen/eoNYPY.css',
+    'https://codepen.io/vantienduclqd/pen/mYxQzd.css',
     {
         'href': 'https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css',
         'rel': 'stylesheet',
