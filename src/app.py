@@ -213,6 +213,7 @@ external_stylesheets = [
     "https://cdn.rawgit.com/plotly/dash-app-stylesheets/2d266c578d2a6e8850ebce48fdb52759b2aef506/stylesheet-oil-and-gas.css",
     "https://cdn.rawgit.com/amadoukane96/8f29daabc5cacb0b7e77707fc1956373/raw/854b1dc5d8b25cd2c36002e1e4f598f5f4ebeee3/test.css",
     "https://use.fontawesome.com/releases/v5.2.0/css/all.css",
+    "https://npmcdn.com/react-select@1.0.0-beta13/dist/react-select.css",
     'https://codepen.io/vantienduclqd/pen/eoNYPY.css',
     {
         'href': 'https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css',
@@ -1088,10 +1089,10 @@ def render_content(tab):
                                 }
                             ),
                             html.P(
-                                "NUMBER OF MONTHS",
+                                "NUMBER OF TESTING MONTHS",
                                 style={
                                     "color": "white",
-                                    "marginBottom": "0",
+                                    "marginBottom": "5px",
                                 }
                             ),
                             dcc.Dropdown(
@@ -1106,8 +1107,16 @@ def render_content(tab):
                                     "backgroundColor": "#18252E",
                                     "color": "white",
                                     "borderColor": "rgba(68,149,209,.9)",
-                                    "width": "100%",
-                                    "marginTop": "5px"
+                                    "width": "60%",
+                                    "marginTop": "5px",
+                                    "marginBottom": "5px",
+                                }
+                            ),
+                            html.P(
+                                "NUMBER OF TRAINING MONTHS",
+                                style={
+                                    "color": "white",
+                                    "marginBottom": "5px",
                                 }
                             ),
                             dcc.Dropdown(
@@ -1123,8 +1132,9 @@ def render_content(tab):
                                     "backgroundColor": "#18252E",
                                     "color": "white",
                                     "borderColor": "rgba(68,149,209,.9)",
-                                    "width": "100%",
-                                    "marginTop": "5px"
+                                    "width": "60%",
+                                    "marginTop": "5px",
+                                    "marginBottom": "5px",
                                 }
                             )
                         ],
