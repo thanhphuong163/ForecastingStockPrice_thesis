@@ -150,6 +150,8 @@ class WebScraping:
 				date=time.time(),
 			)
 			lst_1.append(tmp)
+		if self.verbose:
+			print(len(lst_1))
 		indices_coll = self.database[IndColl]
 		indices_coll.insert_many(lst_1)
 
@@ -171,7 +173,7 @@ class WebScraping:
 			)
 			lst_2.append(tmp)
 		if self.verbose:
-			print('lst_2')
+			print(len(lst_2))
 		components_coll = self.database[CompoColl]
 		components_coll.insert_many(lst_2)
 

@@ -67,8 +67,8 @@ def evaluation(validation):
 
 
 def run_model_with_parameters(train: pd.Series, test: pd.Series,
-                              model_selection='ARIMA', order=(1, 1, 0),
-                              lag=2, hidden_layers=(7, 3)):
+                              model_selection='ARIMA', order=(2, 1, 2),
+                              lag=1, hidden_layers=(4, 3)):
 	# split data
 	# time_series = time_series.sort_index()
 	# time_series = time_series.drop_duplicates()
@@ -152,13 +152,13 @@ def run_model_without_parameters(train: pd.Series, test: pd.Series, model_select
 	# Run model
 	lst_result = list()
 	if model_selection == 'ARIMA':
-		for order in lst_order:
+		for order in tqdm(lst_order):
 			result = run_model_with_parameters(train, test, model_selection=model_selection,
 			                                   order=order)
 			if result['status']:
 				lst_result.append(result)
 	elif model_selection == 'ANN':
-		for ann_param in lst_ann_param:
+		for ann_param in tqdm(lst_ann_param):
 			result = run_model_with_parameters(train, test, model_selection=model_selection,
 			                                   lag=ann_param[0], hidden_layers=ann_param[1:])
 			if result['status']:
