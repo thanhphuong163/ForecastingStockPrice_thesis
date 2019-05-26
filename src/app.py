@@ -13,6 +13,7 @@ from dateutil.relativedelta import relativedelta
 from plotly import tools
 from pymongo import MongoClient
 
+from Models.Arima_Ann import ArimaModel, AnnModel, HybridModel
 from src.query_data import QueryData
 from src.scraping import WebScraping
 from src.settings import DATABASE, IndColl, INDICES_LST, HOST, Indice_options, History_data, CompoColl
@@ -444,8 +445,8 @@ def modal():
                         dcc.Tabs(id="tabs", value='tab-analyze', children=[
                             dcc.Tab(label='ANALYZE', value='tab-analyze', style=tab_style,
                                     selected_style=tab_selected_style),
-                            dcc.Tab(label='PREDICT', value='tab-predict', style=tab_style,
-                                    selected_style=tab_selected_style),
+                            # dcc.Tab(label='PREDICT', value='tab-predict', style=tab_style,
+                            #         selected_style=tab_selected_style),
                             dcc.Tab(label='VALIDATION', value='tab-validation', style=tab_style,
                                     selected_style=tab_selected_style),
                         ]),
@@ -460,6 +461,17 @@ def modal():
                                         "borderRadius": "10px",
                                         "marginRight": "20px"
                                     }
+                                ),
+                                html.Button(
+                                    "Predict",
+                                    id="predict_button",
+                                    n_clicks=0,
+                                    style={
+                                        "borderRadius": "10px",
+                                        "marginRight": "20px",
+                                        "display": "none",
+                                    },
+                                    disabled=True
                                 ),
                                 html.Button(
                                     "Close",
@@ -581,7 +593,10 @@ app.layout = html.Div(
                                 label="Crawl real-time data"
                             ),
                             color="rgb(255, 193, 7)",
-                            labelPosition="top"
+                            labelPosition="top",
+                            style=dict(
+                                display='none'
+                            )
                         ),
                         html.Div(
                             id='hide-switch',
@@ -716,297 +731,297 @@ def generate_modal_open_callback(n, n2, n3, style):
 @app.callback(Output('tabs-content', 'children'),
               [Input('tabs', 'value')])
 def render_content(tab):
-    if tab == 'tab-predict':
-        return html.Div([
-            html.Div(
-                [
-                    # row div with 2 div
-                    html.Div(
-                        [
-                            html.Span(
-                                "SELECT PARAMETERS",
-                                id="modal_parameter",
-                                style={
-                                    "marginBottom": "10px",
-                                    "color": "#45df7e",
-                                }
-                            ),
-                            html.P(
-	                            "TIME",
-                                style={
-                                    "color": "white",
-                                    "marginBottom": "0",
-                                }
-                            ),
-                            dcc.Dropdown(
-                                id='select_time',
-                                options=[
-                                    {"label": "1 day", "value": "day"},
-                                    {"label": "1 week", "value": "week"},
-                                    {"label": "1 month", "value": "month"},
-                                    {"label": "1 year", "value": "year"},
-                                ],
-                                value="day",
-                                style={
-                                    "backgroundColor": "#18252E",
-                                    "color": "white",
-                                    "borderColor": "rgba(68,149,209,.9)",
-                                    "width": "50%",
-                                    "marginTop": "5px"
-                                }
-                            )
-                        ],
-                        id="left_div",
-                        className="six columns",
-                        style={
-                            "paddingLeft": "15px",
-                        }
-                    ),
-                    html.Div(
-                        [
-                            html.P(
-	                            'MODEL',
-                                style={
-                                    "color": "white",
-                                    "marginBottom": "0",
-                                }
-                            ),
-                            dcc.RadioItems(
-                                id="select_model",
-                                options=[
-                                    {"label": i, "value": i} for i in model
-                                ],
-                                labelStyle={
-                                    "display": "inline-block",
-                                    "marginRight": "10px"
-                                },
-                                style={
-                                    "marginTop": "5px"
-                                }
-                            ),
-                            html.Div(
-                                [
-                                    html.P(
-                                        'AR order',
-                                        style={
-                                            "color": "white",
-                                            "marginBottom": "0",
-                                        }
-                                    ),
-                                    dcc.Input(
-                                        id='p-order',
-                                        type='number',
-                                        min=1,
-                                        step=1,
-                                        value=1,
-                                        style={'width': '20%'}
-                                    ),
-                                    html.P(
-                                        'Difference',
-                                        style={
-                                            "color": "white",
-                                            "marginBottom": "0",
-                                        }
-                                    ),
-                                    dcc.Input(
-                                        id='d-order',
-                                        type='number',
-                                        min=1,
-                                        step=1,
-                                        value=1,
-                                        style={'width': '20%'}
-                                    ),
-                                    html.P(
-                                        'MA order',
-                                        style={
-                                            "color": "white",
-                                            "marginBottom": "0",
-                                        }
-                                    ),
-                                    dcc.Input(
-                                        id='q-order',
-                                        type='number',
-                                        min=1,
-                                        step=1,
-                                        value=1,
-                                        style={'width': '20%'}
-                                    )
-                                ],
-                                style={'display': 'none'},
-                                id='ARIMA'
-                            ),
-                            html.Div(
-                                [
-                                    html.P(
-                                        'Lag',
-                                        style={
-                                            "color": "white",
-                                            "marginBottom": "0",
-                                        }
-                                    ),
-                                    dcc.Input(
-                                        id='lag-order',
-                                        type='number',
-                                        min=1,
-                                        step=1,
-                                        value=2,
-                                        style={'width': '20%'}
-                                    ),
-                                    html.P(
-                                        'Hidden layer 1',
-                                        style={
-                                            "color": "white",
-                                            "marginBottom": "0",
-                                        }
-                                    ),
-                                    dcc.Input(
-                                        id='hidden-layer1',
-                                        type='number',
-                                        min=1,
-                                        step=1,
-                                        value=1,
-                                        style={'width': '20%'}
-                                    ),
-                                    html.P(
-                                        'Hidden layer 2',
-                                        style={
-                                            "color": "white",
-                                            "marginBottom": "0",
-                                        }
-                                    ),
-                                    dcc.Input(
-                                        id='hidden-layer2',
-                                        type='number',
-                                        min=1,
-                                        step=1,
-                                        value=1,
-                                        style={'width': '20%'}
-                                    )
-                                ],
-                                style={'display': 'none'},
-                                id='ANN'
-                            ),
-                            html.Div(
-                                [
-                                    html.Div(
-                                        [
-                                            html.P(
-                                                'AR order',
-                                                style={
-                                                    "color": "white",
-                                                    "marginBottom": "0",
-                                                }
-                                            ),
-                                            dcc.Input(
-                                                id='p-order1',
-                                                type='number',
-                                                min=1,
-                                                step=1,
-                                                value=1,
-                                                style={'width': '50%'}
-                                            ),
-                                            html.P(
-                                                'Difference',
-                                                style={
-                                                    "color": "white",
-                                                    "marginBottom": "0",
-                                                }
-                                            ),
-                                            dcc.Input(
-                                                id='d-order1',
-                                                type='number',
-                                                min=1,
-                                                step=1,
-                                                value=1,
-                                                style={'width': '50%'}
-                                            ),
-                                            html.P(
-                                                'MA order',
-                                                style={
-                                                    "color": "white",
-                                                    "marginBottom": "0",
-                                                }
-                                            ),
-                                            dcc.Input(
-                                                id='q-order1',
-                                                type='number',
-                                                min=1,
-                                                step=1,
-                                                value=1,
-                                                style={'width': '50%'}
-                                            )
-                                        ],
-                                        style={'float': 'left'}
-                                    ),
-                                    html.Div(
-                                        [
-                                            html.P(
-                                                'Lag',
-                                                style={
-                                                    "color": "white",
-                                                    "marginBottom": "0",
-                                                }
-                                            ),
-                                            dcc.Input(
-                                                id='lag-order1',
-                                                type='number',
-                                                min=1,
-                                                step=1,
-                                                value=2,
-                                                style={'width': '50%'}
-                                            ),
-                                            html.P(
-                                                'Hidden layer 1',
-                                                style={
-                                                    "color": "white",
-                                                    "marginBottom": "0",
-                                                }
-                                            ),
-                                            dcc.Input(
-                                                id='hidden-layer3',
-                                                type='number',
-                                                min=1,
-                                                step=1,
-                                                value=1,
-                                                style={'width': '50%'}
-                                            ),
-                                            html.P(
-                                                'Hidden layer 2',
-                                                style={
-                                                    "color": "white",
-                                                    "marginBottom": "0",
-                                                }
-                                            ),
-                                            dcc.Input(
-                                                id='hidden-layer4',
-                                                type='number',
-                                                min=1,
-                                                step=1,
-                                                value=1,
-                                                style={'width': '50%'}
-                                            )
-                                        ],
-                                        style={'float': 'right'}
-                                    )
-                                ],
-                                style={'display': 'none'},
-                                id='HYBRID'
-                            )
-                        ],
-                        id="right_div",
-                        className="six columns",
-                        style={
-                            "marginTop": "19px",
-                        }
-                    )
-                ],
-                className="row",
-            ),
-            html.Div(
-                id="result",
-            ),
-        ])
-    elif tab == 'tab-analyze':
+    # if tab == 'tab-predict':
+    #     return html.Div([
+    #         html.Div(
+    #             [
+    #                 # row div with 2 div
+    #                 html.Div(
+    #                     [
+    #                         html.Span(
+    #                             "SELECT PARAMETERS",
+    #                             id="modal_parameter",
+    #                             style={
+    #                                 "marginBottom": "10px",
+    #                                 "color": "#45df7e",
+    #                             }
+    #                         ),
+    #                         html.P(
+    #                             "TIME",
+    #                             style={
+    #                                 "color": "white",
+    #                                 "marginBottom": "0",
+    #                             }
+    #                         ),
+    #                         dcc.Dropdown(
+    #                             id='select_time',
+    #                             options=[
+    #                                 {"label": "1 day", "value": "day"},
+    #                                 {"label": "1 week", "value": "week"},
+    #                                 {"label": "1 month", "value": "month"},
+    #                                 {"label": "1 year", "value": "year"},
+    #                             ],
+    #                             value="day",
+    #                             style={
+    #                                 "backgroundColor": "#18252E",
+    #                                 "color": "white",
+    #                                 "borderColor": "rgba(68,149,209,.9)",
+    #                                 "width": "50%",
+    #                                 "marginTop": "5px"
+    #                             }
+    #                         )
+    #                     ],
+    #                     id="left_div",
+    #                     className="six columns",
+    #                     style={
+    #                         "paddingLeft": "15px",
+    #                     }
+    #                 ),
+    #                 html.Div(
+    #                     [
+    #                         html.P(
+    #                             'MODEL',
+    #                             style={
+    #                                 "color": "white",
+    #                                 "marginBottom": "0",
+    #                             }
+    #                         ),
+    #                         dcc.RadioItems(
+    #                             id="select_model",
+    #                             options=[
+    #                                 {"label": i, "value": i} for i in model
+    #                             ],
+    #                             labelStyle={
+    #                                 "display": "inline-block",
+    #                                 "marginRight": "10px"
+    #                             },
+    #                             style={
+    #                                 "marginTop": "5px"
+    #                             }
+    #                         ),
+    #                         html.Div(
+    #                             [
+    #                                 html.P(
+    #                                     'AR order',
+    #                                     style={
+    #                                         "color": "white",
+    #                                         "marginBottom": "0",
+    #                                     }
+    #                                 ),
+    #                                 dcc.Input(
+    #                                     id='p-order',
+    #                                     type='number',
+    #                                     min=1,
+    #                                     step=1,
+    #                                     value=1,
+    #                                     style={'width': '20%'}
+    #                                 ),
+    #                                 html.P(
+    #                                     'Difference',
+    #                                     style={
+    #                                         "color": "white",
+    #                                         "marginBottom": "0",
+    #                                     }
+    #                                 ),
+    #                                 dcc.Input(
+    #                                     id='d-order',
+    #                                     type='number',
+    #                                     min=1,
+    #                                     step=1,
+    #                                     value=1,
+    #                                     style={'width': '20%'}
+    #                                 ),
+    #                                 html.P(
+    #                                     'MA order',
+    #                                     style={
+    #                                         "color": "white",
+    #                                         "marginBottom": "0",
+    #                                     }
+    #                                 ),
+    #                                 dcc.Input(
+    #                                     id='q-order',
+    #                                     type='number',
+    #                                     min=1,
+    #                                     step=1,
+    #                                     value=1,
+    #                                     style={'width': '20%'}
+    #                                 )
+    #                             ],
+    #                             style={'display': 'none'},
+    #                             id='ARIMA'
+    #                         ),
+    #                         html.Div(
+    #                             [
+    #                                 html.P(
+    #                                     'Lag',
+    #                                     style={
+    #                                         "color": "white",
+    #                                         "marginBottom": "0",
+    #                                     }
+    #                                 ),
+    #                                 dcc.Input(
+    #                                     id='lag-order',
+    #                                     type='number',
+    #                                     min=1,
+    #                                     step=1,
+    #                                     value=2,
+    #                                     style={'width': '20%'}
+    #                                 ),
+    #                                 html.P(
+    #                                     'Hidden layer 1',
+    #                                     style={
+    #                                         "color": "white",
+    #                                         "marginBottom": "0",
+    #                                     }
+    #                                 ),
+    #                                 dcc.Input(
+    #                                     id='hidden-layer1',
+    #                                     type='number',
+    #                                     min=1,
+    #                                     step=1,
+    #                                     value=1,
+    #                                     style={'width': '20%'}
+    #                                 ),
+    #                                 html.P(
+    #                                     'Hidden layer 2',
+    #                                     style={
+    #                                         "color": "white",
+    #                                         "marginBottom": "0",
+    #                                     }
+    #                                 ),
+    #                                 dcc.Input(
+    #                                     id='hidden-layer2',
+    #                                     type='number',
+    #                                     min=1,
+    #                                     step=1,
+    #                                     value=1,
+    #                                     style={'width': '20%'}
+    #                                 )
+    #                             ],
+    #                             style={'display': 'none'},
+    #                             id='ANN'
+    #                         ),
+    #                         html.Div(
+    #                             [
+    #                                 html.Div(
+    #                                     [
+    #                                         html.P(
+    #                                             'AR order',
+    #                                             style={
+    #                                                 "color": "white",
+    #                                                 "marginBottom": "0",
+    #                                             }
+    #                                         ),
+    #                                         dcc.Input(
+    #                                             id='p-order1',
+    #                                             type='number',
+    #                                             min=1,
+    #                                             step=1,
+    #                                             value=1,
+    #                                             style={'width': '50%'}
+    #                                         ),
+    #                                         html.P(
+    #                                             'Difference',
+    #                                             style={
+    #                                                 "color": "white",
+    #                                                 "marginBottom": "0",
+    #                                             }
+    #                                         ),
+    #                                         dcc.Input(
+    #                                             id='d-order1',
+    #                                             type='number',
+    #                                             min=1,
+    #                                             step=1,
+    #                                             value=1,
+    #                                             style={'width': '50%'}
+    #                                         ),
+    #                                         html.P(
+    #                                             'MA order',
+    #                                             style={
+    #                                                 "color": "white",
+    #                                                 "marginBottom": "0",
+    #                                             }
+    #                                         ),
+    #                                         dcc.Input(
+    #                                             id='q-order1',
+    #                                             type='number',
+    #                                             min=1,
+    #                                             step=1,
+    #                                             value=1,
+    #                                             style={'width': '50%'}
+    #                                         )
+    #                                     ],
+    #                                     style={'float': 'left'}
+    #                                 ),
+    #                                 html.Div(
+    #                                     [
+    #                                         html.P(
+    #                                             'Lag',
+    #                                             style={
+    #                                                 "color": "white",
+    #                                                 "marginBottom": "0",
+    #                                             }
+    #                                         ),
+    #                                         dcc.Input(
+    #                                             id='lag-order1',
+    #                                             type='number',
+    #                                             min=1,
+    #                                             step=1,
+    #                                             value=2,
+    #                                             style={'width': '50%'}
+    #                                         ),
+    #                                         html.P(
+    #                                             'Hidden layer 1',
+    #                                             style={
+    #                                                 "color": "white",
+    #                                                 "marginBottom": "0",
+    #                                             }
+    #                                         ),
+    #                                         dcc.Input(
+    #                                             id='hidden-layer3',
+    #                                             type='number',
+    #                                             min=1,
+    #                                             step=1,
+    #                                             value=1,
+    #                                             style={'width': '50%'}
+    #                                         ),
+    #                                         html.P(
+    #                                             'Hidden layer 2',
+    #                                             style={
+    #                                                 "color": "white",
+    #                                                 "marginBottom": "0",
+    #                                             }
+    #                                         ),
+    #                                         dcc.Input(
+    #                                             id='hidden-layer4',
+    #                                             type='number',
+    #                                             min=1,
+    #                                             step=1,
+    #                                             value=1,
+    #                                             style={'width': '50%'}
+    #                                         )
+    #                                     ],
+    #                                     style={'float': 'right'}
+    #                                 )
+    #                             ],
+    #                             style={'display': 'none'},
+    #                             id='HYBRID'
+    #                         )
+    #                     ],
+    #                     id="right_div",
+    #                     className="six columns",
+    #                     style={
+    #                         "marginTop": "19px",
+    #                     }
+    #                 )
+    #             ],
+    #             className="row",
+    #         ),
+    #         html.Div(
+    #             id="predict-result",
+    #         ),
+    #     ])
+    if tab == 'tab-analyze':
         return html.Div([
             html.Div(
                 [
@@ -1135,6 +1150,30 @@ def render_content(tab):
                                     "width": "60%",
                                     "marginTop": "5px",
                                     "marginBottom": "5px",
+                                }
+                            ),
+                            html.P(
+                                "TIME TO PREDICT",
+                                style={
+                                    "color": "white",
+                                    "marginBottom": "0",
+                                }
+                            ),
+                            dcc.Dropdown(
+                                id='select_time',
+                                options=[
+                                    {"label": "1 day", "value": "day"},
+                                    {"label": "1 week", "value": "week"},
+                                    {"label": "1 month", "value": "month"},
+                                    {"label": "1 year", "value": "year"},
+                                ],
+                                value="day",
+                                style={
+                                    "backgroundColor": "#18252E",
+                                    "color": "white",
+                                    "borderColor": "rgba(68,149,209,.9)",
+                                    "width": "50%",
+                                    "marginTop": "5px"
                                 }
                             )
                         ],
@@ -1373,6 +1412,42 @@ def render_content(tab):
                                 ],
                                 style={'display': 'none'},
                                 id='HYBRID-test'
+                            ),
+                            html.Div(
+                                [
+                                    html.P(
+                                        'Window size',
+                                        style={
+                                            "color": "white",
+                                            "marginBottom": "0",
+                                        }
+                                    ),
+                                    dcc.Input(
+                                        id='window-size-lstm',
+                                        type='number',
+                                        min=0,
+                                        step=1,
+                                        placeholder='auto',
+                                        style={'width': '20%'}
+                                    ),
+                                    html.P(
+                                        'lag',
+                                        style={
+                                            "color": "white",
+                                            "marginBottom": "0",
+                                        }
+                                    ),
+                                    dcc.Input(
+                                        id='lag-lstm',
+                                        type='number',
+                                        min=0,
+                                        step=1,
+                                        placeholder='auto',
+                                        style={'width': '20%'}
+                                    )
+                                ],
+                                style={'display': 'none'},
+                                id='LSTM-test'
                             )
                         ],
                         id="right_div",
@@ -1448,10 +1523,126 @@ def choose_parameters_HYBRID(model):
     else:
         return {'display': 'none'}
 
+
+@app.callback(Output('LSTM-test', 'style'),
+              [Input('select_model_test', 'value')])
+def choose_parameters_LSTM(model):
+    if model == 'LSTM':
+        return {'display': 'block'}
+    else:
+        return {'display': 'none'}
+
+
+# predict result
+# @app.callback(Output('predict-result', 'children'),
+#               [
+#                   Input("analyze_button", "n_clicks"),
+#                   Input("predict_button", "n_clicks"),
+#                   Input("select_time", "value"),
+#                   Input("input", "value"),
+#                   Input('indice-component', 'value'),
+#                   Input('select_model', 'value'),
+#                   Input('p-order', 'value'),
+#                   Input('d-order', 'value'),
+#                   Input('q-order', 'value'),
+#                   Input('lag-order', 'value'),
+#                   Input('hidden-layer1', 'value'),
+#                   Input('hidden-layer2', 'value'),
+#                   Input('p-order1', 'value'),
+#                   Input('d-order1', 'value'),
+#                   Input('q-order1', 'value'),
+#                   Input('lag-order1', 'value'),
+#                   Input('hidden-layer3', 'value'),
+#                   Input('hidden-layer4', 'value'),
+#               ]
+#               )
+# def graph_predict(
+#         n_analyze,
+#         n_predict,
+#         selected_time_predict,
+#         selected_indice,
+#         selected_stock,
+#         selected_model,
+#         p_arima,
+#         d_arima,
+#         q_arima,
+#         lag_ann,
+#         hid1_ann,
+#         hid2_ann,
+#         p_hybrid,
+#         d_hybrid,
+#         q_hybrid,
+#         lag_hybrid,
+#         hid1_hybrid,
+#         hid2_hybrid,
+# ):
+#     start = dt.today()
+#     lag = None
+#     hid1 = None
+#     hid2 = None
+#     p = None
+#     d = None
+#     q = None
+#     model = None
+#     query = QueryData(mng_client)
+#
+#     if selected_stock is not None:
+#         df_history = query.get_historical_data([selected_stock], None, start)
+#     else:
+#         df_history = query.get_historical_data([selected_indice], None, start)
+#
+#     df_history = df_history.sort_index()
+#
+#     if selected_model == 'ANN':
+#         lag = lag_ann
+#         hid1 = hid1_ann
+#         hid2 = hid2_ann
+#     elif selected_model == 'ARIMA':
+#         p = p_arima
+#         d = d_arima
+#         q = q_arima
+#     elif selected_model == 'Hybrid':
+#         lag = lag_hybrid
+#         hid1 = hid1_hybrid
+#         hid2 = hid2_hybrid
+#         p = p_hybrid
+#         d = d_hybrid
+#         q = q_hybrid
+#
+#     model_ann = AnnModel(df_history, (lag, (hid1, hid2)))
+#     model_arima = ArimaModel(df_history, (p, d, q))
+#     model_hybrid = HybridModel(df_history, (p, d, q), lag, (hid1, hid2))
+#
+#     if selected_model == 'ARIMA':
+#         model = model_arima
+#     elif selected_model == 'ANN':
+#         model = model_ann
+#     elif selected_model == 'Hybrid':
+#         model = model_hybrid
+#
+#     print('Series....')
+#     print(model)
+#     if selected_time_predict == 'day':
+#         Series = model.predict_multi_step_ahead(start=start, steps=1, freq='D')
+#     if selected_time_predict == 'week':
+#         Series = model.predict_multi_step_ahead(start=start, steps=1, freq='W')
+#     if selected_time_predict == 'month':
+#         Series = model.predict_multi_step_ahead(start=start, steps=1, freq='M')
+#     if selected_time_predict == 'year':
+#         Series = model.predict_multi_step_ahead(start=start, steps=1, freq='Y')
+#
+#     if n > 0:
+#         return html.Div(
+#             'checked'
+#         )
+
+
 # validation
 @app.callback(Output('result-test', 'children'),
               [
                   Input("analyze_button", "n_clicks"),
+                  Input("predict_button", "n_clicks"),
+                  Input("select_time", "value"),
                   Input("select_time_test", "value"),
                   Input("select_time_train", "value"),
                   Input("input", "value"),
@@ -1469,9 +1660,13 @@ def choose_parameters_HYBRID(model):
                   Input('lag-order1-test', 'value'),
                   Input('hidden-layer3-test', 'value'),
                   Input('hidden-layer4-test', 'value'),
+                  Input('window-size-lstm', 'value'),
+                  Input('lag-lstm', 'value')
               ])
 def graph_validation(
-        n,
+        n_analyze,
+        n_predict,
+        selected_time_predict,
         selected_time_test,
         selected_time_train,
         selected_indice,
@@ -1489,6 +1684,8 @@ def graph_validation(
         lag_hybrid,
         hid1_hybrid,
         hid2_hybrid,
+        window_size_lstm,
+        lag_lstm
 ):
     query = QueryData(mng_client)
     start_test = dt.today() - relativedelta(months=selected_time_test)
@@ -1497,13 +1694,20 @@ def graph_validation(
     if selected_stock is not None:
         df_stock_test = query.get_historical_data([selected_stock], start_test, end)
         df_stock_train = query.get_historical_data([selected_stock], start=start_train, end=start_test)
+        df_history = query.get_historical_data([selected_stock], None, end)
     else:
         df_stock_test = query.get_historical_data([selected_indice], start_test, end)
         df_stock_train = query.get_historical_data([selected_indice], start=start_train, end=start_test)
+        df_history = query.get_historical_data([selected_indice], None, end)
     lag = None
     hid1 = None
     hid2 = None
-
+    p = None
+    d = None
+    q = None
+    validation = None
+    model = None
+    Series = None
     # Sort dataframe
     df_stock_test = df_stock_test.sort_index()
     df_stock_train = df_stock_train.sort_index()
@@ -1511,28 +1715,48 @@ def graph_validation(
         lag = lag_ann
         hid1 = hid1_ann
         hid2 = hid2_ann
+    elif selected_model_test == 'ARIMA':
+        p = p_arima
+        d = d_arima
+        q = q_arima
     elif selected_model_test == 'Hybrid':
         lag = lag_hybrid
         hid1 = hid1_hybrid
         hid2 = hid2_hybrid
-
+        p = p_hybrid
+        d = d_hybrid
+        q = q_hybrid
+    elif selected_model_test == 'LSTM':
+        lag = lag_lstm
     result = run_model_with_parameters(
         df_stock_train['close'],
         df_stock_test['close'],
         selected_model_test,
-        order=(p_arima, d_arima, q_arima),
+        order=(p, d, q),
         lag=lag,
-        hidden_layers=(hid1, hid2)
+        hidden_layers=(hid1, hid2),
+        window_size=window_size_lstm
     )
 
     if result['status']:
-        # model = result['model']
-        test_evaluation = result['test_evaluation']
+        name = result['model_name']
+        model = result['model']
+        print(name)
         validation = result['model'].validate(df_stock_test['close'])
 
-    print("checking ...")
-    print(validation)
-    if n > 0:
+    if selected_time_predict == 'day':
+        Series = model.predict_multi_step_ahead(start=end, steps=1, freq='D')
+    if selected_time_predict == 'week':
+        Series = model.predict_multi_step_ahead(start=end, steps=7, freq='D')
+    if selected_time_predict == 'month':
+        Series = model.predict_multi_step_ahead(start=end, steps=30, freq='D')
+    if selected_time_predict == 'year':
+        Series = model.predict_multi_step_ahead(start=end, steps=360, freq='D')
+
+    print('series...')
+    print(Series)
+
+    if n_analyze > 0 and n_predict == 0:
         trace_validation = go.Scatter(
             x=validation.index,
             y=validation,
@@ -1564,9 +1788,65 @@ def graph_validation(
         figure.append_trace(trace_stock_train, 1, 1)
         figure.append_trace(trace_stock_test, 1, 1)
         figure.append_trace(trace_validation, 1, 1)
+
+        # if n_predict > 0:
+        #     trace_predict = go.Scatter(
+        #         x=Series.index,
+        #         y=Series,
+        #         mode='lines',
+        #         line=dict(color='blue'),
+        #         name='predict'
+        #     )
+        #     figure.append_trace(trace_predict, 1, 1)
         figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
         figure['layout'] = dict(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
+        return dcc.Graph(
+            id='validation-graph',
+            figure=figure,
+            style={'margin': 'auto 5%'}
+        )
+    elif n_analyze > 0 and n_predict > 0:
+        trace_validation = go.Scatter(
+            x=validation.index,
+            y=validation,
+            mode='lines',
+            line=dict(color='#ff9354'),
+            name='validation'
+        )
 
+        trace_stock_train = go.Scatter(
+            x=df_stock_train.index,
+            y=df_stock_train['close'],
+            mode='lines',
+            line=dict(color='#5fba7d'),
+            name="in-sample data"
+        )
+        trace_stock_test = go.Scatter(
+            x=df_stock_test.index,
+            y=df_stock_test['close'],
+            mode='lines',
+            line=dict(color='red'),
+            name="validation data"
+        )
+
+        figure = tools.make_subplots(
+            rows=1,
+            cols=1,
+            print_grid=False
+        )
+        figure.append_trace(trace_stock_train, 1, 1)
+        figure.append_trace(trace_stock_test, 1, 1)
+        figure.append_trace(trace_validation, 1, 1)
+        trace_predict = go.Scatter(
+            x=Series.index,
+            y=Series,
+            mode='lines',
+            line=dict(color='blue'),
+            name='predict'
+        )
+        figure.append_trace(trace_predict, 1, 1)
+        figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
+        figure['layout'] = dict(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
         return dcc.Graph(
             id='validation-graph',
             figure=figure,
@@ -1630,20 +1910,35 @@ def print_evaluation_table(
     lag = None
     hid1 = None
     hid2 = None
+    p = None
+    d = None
+    q = None
+    # Sort dataframe
+    df_stock_test = df_stock_test.sort_index()
+    df_stock_train = df_stock_train.sort_index()
     if selected_model_test == 'ANN':
         lag = lag_ann
         hid1 = hid1_ann
         hid2 = hid2_ann
+        p = p_arima
+        d = d_arima
+        q = q_arima
+    elif selected_model_test == 'ARIMA':
+        p = p_arima
+        d = d_arima
+        q = q_arima
     elif selected_model_test == 'Hybrid':
         lag = lag_hybrid
         hid1 = hid1_hybrid
         hid2 = hid2_hybrid
-
+        p = p_hybrid
+        d = d_hybrid
+        q = q_hybrid
     result = run_model_with_parameters(
         df_stock_train['close'],
         df_stock_test['close'],
         selected_model_test,
-        order=(p_arima, d_arima, q_arima),
+        order=(p, d, q),
         lag=lag,
         hidden_layers=(hid1, hid2)
     )
@@ -1651,7 +1946,7 @@ def print_evaluation_table(
     if result['status']:
         # model = result['model']
         test_evaluation = result['test_evaluation']
-        validation = model['model'].validate(df_stock_test['close'])
+        # validation = model['model'].validate(df_stock_test['close'])
 
     if n > 0:
         trace_table = go.Table(
@@ -1680,6 +1975,48 @@ def print_evaluation_table(
                 )
             ]
         )
+
+
+# reset predict result
+@app.callback(
+    Output("predict_button", "n_clicks"),
+    [
+        Input("closeModal", "n_clicks"),
+        Input("accept", "n_clicks"),
+    ]
+)
+def reset_predict_result(n, n2):
+    if n > 0:
+        return 0
+    if n2 > 0:
+        return 0
+
+
+# display predict button
+@app.callback(
+    Output("predict_button", "style"),
+    [Input('tabs', 'value'),
+     Input('analyze_button', 'n_clicks')],
+)
+def display_predict_button(tab, n):
+    if tab == 'tab-validation':
+        if n > 0:
+            return {'display': 'inline-block', 'marginRight': '20px', 'borderRadius': '10px'}
+        else:
+            return {'display': 'inline-block', 'marginRight': '20px', 'borderRadius': '10px', 'color': 'grey'}
+    else:
+        return {'display': 'none'}
+
+
+# disable predict button
+@app.callback(
+    Output("predict_button", "disabled"),
+    [Input('analyze_button', 'n_clicks')]
+)
+def disble_predict_button(n):
+    if n > 0:
+        return False
+    return True
 # reset analyze result
 @app.callback(
     Output("analyze_button", "n_clicks"),
@@ -1707,8 +2044,6 @@ def reset_analyze_result(n, n2):
     ]
 )
 def return_analyze_result(n3, alpha, lag, input_data, input_component):
-    # mng_client = MongoClient(HOST)
-    # mng_db = mng_client[DATABASE]
     db_cm_history = mng_db[History_data]
     db_cm_component = mng_db[CompoColl]
     if input_component is not None:
@@ -1938,13 +2273,8 @@ asyncio.set_event_loop_policy(AnyThreadEventLoopPolicy())
 @app.callback(Output('hide-switch', 'children'),
               [Input('my-boolean-switch', 'on')])
 def update_live_graph(on):
-    if on:
+    if on == False:
         loop.run_forever()
-        return ''
-    else:
-        print('Stop scraping.')
-        loop.stop()
-        print('checked')
         return ''
 
 @app.callback(Output('output', 'children'),
@@ -2054,7 +2384,8 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
         figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 5}
         figure['layout']['xaxis'].update(title='1', showgrid=False)
         figure['layout']['yaxis'].update(title='2', showgrid=False)
-        figure['layout'].update(title=input_data, paper_bgcolor="#18252E", plot_bgcolor="#18252E")
+        figure['layout'].update(title=input_data, paper_bgcolor="#18252E", plot_bgcolor="#18252E",
+                                font=dict(color='white'))
         figure['layout']['yaxis'] = dict(
             # range=[800, 1000],
             domain=[0.55, 1]
