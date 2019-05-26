@@ -244,6 +244,7 @@ class WebScraping:
 		historical_data_coll = self.database[History_data]
 		historical_data_coll.delete_many({})
 		for ticket in lst_ticket:
+			print(ticket)
 			# Initialize parameters for request
 			payload['curr_id'] = ticket['curr_id']
 			payload['smlID'] = ticket['smlID']

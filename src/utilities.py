@@ -99,8 +99,9 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 			result['order'] = order
 			result['lag'] = lag
 			result['hidden_layers'] = hidden_layers
-		elif model_selection == 'LSTM+GBM':
-			model = LSTM_GBM(train, window_size=window_size, lags=lag)
+		elif model_selection == 'LSTM_GBM':
+			print('Run model LSTM')
+			model = LSTM_GBM(train, window_size=window_size, lags=lag, verbose=True)
 			insample_data = train[window_size + lag:]
 			result['window_size'] = window_size
 			result['lag'] = lag
@@ -124,7 +125,7 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 		result['model_name'] = model_selection
 		result['model'] = model
 	except Exception as e:
-		print(e)
+		# print(e)
 		result['status'] = False
 
 	return result

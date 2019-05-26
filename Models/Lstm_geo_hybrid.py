@@ -9,11 +9,16 @@ import numpy as np
 import pandas as pd
 from keras.layers import LSTM, Dense
 from keras.models import Sequential
+
 from sklearn.preprocessing import MinMaxScaler
 
 
 class LSTM_GBM:
 	def __init__(self, historical_data, window_size=5, lags=5, n_epochs=100, verbose=False):
+		self.target_volatility_scaler = MinMaxScaler(feature_range=(0, 1))
+		self.target_drift_scaler = MinMaxScaler(feature_range=(-1, 1))
+		self.model_volatility = Sequential()
+		self.model_drift = Sequential()
 		self.historical_data = historical_data
 		self.window_size = window_size
 		self.lags = lags
@@ -97,10 +102,6 @@ class LSTM_GBM:
 		y_volatility = df_scaled_volatility['Lag_0'][self.lags:]
 		X_volatility = df_scaled_volatility.drop('Lag_0', axis=1)[self.lags:]
 
-		# Get scaling target
-		self.target_drift_scaler = MinMaxScaler(feature_range=(-1, 1))
-		self.target_volatility_scaler = MinMaxScaler(feature_range=(0, 1))
-
 		df_drift_tmp = pd.DataFrame(df_lag_drift['Lag_0'])
 		df_volatility_tmp = pd.DataFrame(df_lag_volatility['Lag_0'])
 		self.target_drift_scaler.fit(df_drift_tmp)
@@ -126,14 +127,12 @@ class LSTM_GBM:
 		                                                      self.input_volatility.shape[1])
 
 		# Create model
-		self.model_drift = Sequential()
 		self.model_drift.add(
 			LSTM(100, batch_input_shape=(batch_size, self.input_drift.shape[1], self.input_drift.shape[2]),
 			     stateful=True))
 		self.model_drift.add(Dense(1, activation='tanh'))
 		self.model_drift.compile(loss='mean_squared_error', optimizer='adam')
 
-		self.model_volatility = Sequential()
 		self.model_volatility.add(
 			LSTM(100, batch_input_shape=(batch_size, self.input_volatility.shape[1], self.input_volatility.shape[2]),
 			     stateful=True))
