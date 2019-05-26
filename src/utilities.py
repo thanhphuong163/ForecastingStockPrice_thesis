@@ -14,6 +14,7 @@ from statsmodels.tsa.stattools import pacf, acf
 from tqdm import tqdm_notebook as tqdm
 
 from Models.Arima_Ann import HybridModel, AnnModel, ArimaModel
+from Models.Lstm_geo_hybrid import LSTM_GBM
 from src.config_tickets import ticket_lst
 from src.scraping import WebScraping
 
@@ -68,7 +69,8 @@ def evaluation(validation):
 
 def run_model_with_parameters(train: pd.Series, test: pd.Series,
                               model_selection='ARIMA', order=(2, 1, 2),
-                              lag=1, hidden_layers=(4, 3)):
+                              lag=1, hidden_layers=(4, 3),
+                              window_size=10):
 	# split data
 	# time_series = time_series.sort_index()
 	# time_series = time_series.drop_duplicates()
@@ -97,6 +99,11 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 			result['order'] = order
 			result['lag'] = lag
 			result['hidden_layers'] = hidden_layers
+		elif model_selection == 'LSTM+GBM':
+			model = LSTM_GBM(train, window_size=window_size, lags=lag)
+			insample_data = train[window_size + lag:]
+			result['window_size'] = window_size
+			result['lag'] = lag
 
 		# Fit model
 		model.fit()
@@ -116,7 +123,8 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 		result['status'] = True
 		result['model_name'] = model_selection
 		result['model'] = model
-	except:
+	except Exception as e:
+		print(e)
 		result['status'] = False
 
 	return result
@@ -132,6 +140,10 @@ def gen_ann(lags, hl):
 	return list(itertools.product(lags, hl1, hl2))
 
 
+def gen_lstm(window_size, lags):
+	return list(itertools.product(window_size, lags))
+
+
 def choose_model(lst_result):
 	mae = lst_result[0]['test_evaluation']['mae']
 	result_selection = lst_result[0]
@@ -144,10 +156,11 @@ def choose_model(lst_result):
 
 def run_model_without_parameters(train: pd.Series, test: pd.Series, model_selection='ARIMA',
                                  p=range(1, 4), d=range(0, 2), q=range(0, 3),
-                                 lags=range(1, 4), hl=range(3, 8)):
+                                 lags=range(1, 4), hl=range(3, 8), window_size=range(5, 11)):
 	# Generate parameters
 	lst_order = gen_order(p, d, q)
 	lst_ann_param = gen_ann(lags, hl)
+	lst_lstm = gen_lstm(window_size, lags)
 
 	# Run model
 	lst_result = list()
@@ -167,9 +180,7 @@ def run_model_without_parameters(train: pd.Series, test: pd.Series, model_select
 		# Choose the best ARIMA model
 		lst_arima_result = list()
 		for order in tqdm(lst_order, desc='Choosing ARIMA'):
-			result = run_model_with_parameters(train, test, model_selection=model_selection,
-			                                   lag=1, hidden_layers=(1, 1),
-			                                   order=order)
+			result = run_model_with_parameters(train, test, model_selection='ARIMA', order=order)
 			if result['status']:
 				lst_arima_result.append(result)
 		_result = choose_model(lst_arima_result)
@@ -180,6 +191,12 @@ def run_model_without_parameters(train: pd.Series, test: pd.Series, model_select
 			result = run_model_with_parameters(train, test, model_selection=model_selection,
 			                                   lag=ann_param[0], hidden_layers=ann_param[1:],
 			                                   order=chosen_order)
+			if result['status']:
+				lst_result.append(result)
+	elif model_selection == 'LSTM+GBM':
+		for lstm_param in lst_lstm:
+			result = run_model_with_parameters(train, test, model_selection='LSTM+GBM',
+			                                   window_size=lstm_param[0], lag=lstm_param[1])
 			if result['status']:
 				lst_result.append(result)
 

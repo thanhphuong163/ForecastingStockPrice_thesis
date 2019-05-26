@@ -52,7 +52,7 @@ class ArimaModel:
 			model = sm.tsa.SARIMAX(historical_data, order=self.order, enforce_stationarity=False)
 			model_fit = model.fit(disp=0)
 			output = model_fit.forecast()
-			predictions.append(output[-1])
+			predictions.append(output[0])
 			historical_data.append(test_data[t])
 		return pd.Series(predictions, index=test_data.index).fillna(0)
 
