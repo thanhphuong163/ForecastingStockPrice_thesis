@@ -13,7 +13,6 @@ from dateutil.relativedelta import relativedelta
 from plotly import tools
 from pymongo import MongoClient
 
-from Models.Arima_Ann import ArimaModel, AnnModel, HybridModel
 from src.query_data import QueryData
 from src.scraping import WebScraping
 from src.settings import DATABASE, IndColl, INDICES_LST, HOST, Indice_options, History_data, CompoColl
@@ -25,7 +24,7 @@ timing = [
 
 ]
 
-model = ["ARIMA", "ANN", "Hybrid", "LSTM"]
+model = ["ARIMA", "ANN", "Hybrid", "LSTM_GBM"]
 
 evaluation = ["Mean squared error", "Root mean squared error", "Mean absolute error", "Mean absolute percentage error"]
 evaluation_test = ["mse", "rmse", "mae", "mape"]
@@ -1527,7 +1526,7 @@ def choose_parameters_HYBRID(model):
 @app.callback(Output('LSTM-test', 'style'),
               [Input('select_model_test', 'value')])
 def choose_parameters_LSTM(model):
-    if model == 'LSTM':
+    if model == 'LSTM_GBM':
         return {'display': 'block'}
     else:
         return {'display': 'none'}
@@ -1726,8 +1725,10 @@ def graph_validation(
         p = p_hybrid
         d = d_hybrid
         q = q_hybrid
-    elif selected_model_test == 'LSTM':
+    elif selected_model_test == 'LSTM_GBM':
+        print(selected_model_test)
         lag = lag_lstm
+
     result = run_model_with_parameters(
         df_stock_train['close'],
         df_stock_test['close'],
@@ -1741,17 +1742,18 @@ def graph_validation(
     if result['status']:
         name = result['model_name']
         model = result['model']
-        print(name)
+        # print(name)
         validation = result['model'].validate(df_stock_test['close'])
 
+    start_time = df_stock_test.index[-1]
     if selected_time_predict == 'day':
-        Series = model.predict_multi_step_ahead(start=end, steps=1, freq='D')
+        Series = model.predict_multi_step_ahead(start=start_time, steps=1, freq='D')
     if selected_time_predict == 'week':
-        Series = model.predict_multi_step_ahead(start=end, steps=7, freq='D')
+        Series = model.predict_multi_step_ahead(start=start_time, steps=7, freq='D')
     if selected_time_predict == 'month':
-        Series = model.predict_multi_step_ahead(start=end, steps=30, freq='D')
+        Series = model.predict_multi_step_ahead(start=start_time, steps=30, freq='D')
     if selected_time_predict == 'year':
-        Series = model.predict_multi_step_ahead(start=end, steps=360, freq='D')
+        Series = model.predict_multi_step_ahead(start=start_time, steps=360, freq='D')
 
     print('series...')
     print(Series)
@@ -1983,12 +1985,15 @@ def print_evaluation_table(
     [
         Input("closeModal", "n_clicks"),
         Input("accept", "n_clicks"),
+        Input("analyze_button", "n_clicks")
     ]
 )
-def reset_predict_result(n, n2):
+def reset_predict_result(n, n2, n3):
     if n > 0:
         return 0
     if n2 > 0:
+        return 0
+    if n3 > 0:
         return 0
 
 
