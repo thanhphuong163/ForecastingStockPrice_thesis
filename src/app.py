@@ -512,7 +512,10 @@ def modal():
 
 app.layout = html.Div(
     [
+        # live clock update
         dcc.Interval(id="interval", interval=1 * 1000, n_intervals=0),
+        # stock informations update
+        dcc.Interval(id='infor-interval', interval=1 * 10000, n_intervals=0),
         dcc.ConfirmDialog(
             id='confirm',
             message='Update historical data successfully',
@@ -2131,16 +2134,17 @@ def return_analyze_result(n3, alpha, lag, input_data, input_component):
 #indice information
 @app.callback(
     (Output("indice-information", "children")),
-    [
-        Input("input", "value"),
-        Input('indice-component', 'value'),
+    [Input("infor-interval", "n_intervals"),
+     Input("input", "value"),
+     Input('indice-component', 'value'),
     ]
 )
-def get_indice_informations(selected_indice, indice_component):
+def get_indice_informations(n, selected_indice, indice_component):
     mng_client = MongoClient(HOST)
     mng_db = mng_client[DATABASE]
     db_cm_ind = mng_db[IndColl]
     df_ind = pd.DataFrame(list(db_cm_ind.find({"name": selected_indice}).sort("date", pymongo.DESCENDING).limit(2)))
+    # df_ind['date'] = df_ind['date'].apply(lambda x: x+7*3600)
     df_ind['date'] = df_ind['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
     last_price = str(df_ind['last'].values[0].round(2))
     return html.Div([
@@ -2202,16 +2206,17 @@ def get_indice_informations(selected_indice, indice_component):
 # component information
 @app.callback(
     (Output("component-information", "children")),
-    [
-        Input('indice-component', 'value'),
+    [Input("infor-interval", "n_intervals"),
+     Input('indice-component', 'value'),
     ]
 )
-def get_component_information(selected_component):
+def get_component_information(n, selected_component):
     mng_client = MongoClient(HOST)
     mng_db = mng_client[DATABASE]
     db_cm_component = mng_db[CompoColl]
     df_component = pd.DataFrame(
         list(db_cm_component.find({"name": selected_component}).sort("date", pymongo.DESCENDING).limit(2)))
+    # df_component['date'] = df_component['date'].apply(lambda x: x+7*3600)
     df_component['date'] = df_component['date'].apply(lambda x: dt.utcfromtimestamp(x).strftime('%Y-%m-%d %H:%M:%S'))
     last_price = str(df_component['last'].values[0].round(2))
     return html.Div([
@@ -2291,11 +2296,11 @@ def update_live_graph(on):
               events=[Event('graph-update', 'interval')])
 def update_graph_scatter(input_data, input_data_component, chart_type, studies):
     try:
-
         db_cm_ind = mng_db[IndColl]
         db_cm_history = mng_db[History_data]
         db_cm_component = mng_db[CompoColl]
-
+        print(input_data)
+        print(input_data_component)
         if input_data_component is not None and input_data is not None:
             df_ind = pd.DataFrame(list(db_cm_component.find(
                 {
@@ -2421,7 +2426,8 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                     dict(step='all')
                 ]),
                 font=dict(family='Arial',
-                          size=10),
+                          size=10,
+                          color='black'),
                 bgcolor='white',
                 activecolor='#ffc107'
             ),

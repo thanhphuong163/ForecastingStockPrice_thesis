@@ -14,7 +14,7 @@ from statsmodels.tsa.stattools import pacf, acf
 from tqdm import tqdm_notebook as tqdm
 
 from Models.Arima_Ann import HybridModel, AnnModel, ArimaModel
-from Models.Lstm_geo_hybrid import LSTM_GBM
+# from Models.Lstm_geo_hybrid import LSTM_GBM
 from src.config_tickets import ticket_lst
 from src.scraping import WebScraping
 
@@ -99,12 +99,11 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 			result['order'] = order
 			result['lag'] = lag
 			result['hidden_layers'] = hidden_layers
-		elif model_selection == 'LSTM_GBM':
-			print('Run model LSTM')
-			model = LSTM_GBM(train, window_size=window_size, lags=lag, verbose=True)
-			insample_data = train[window_size + lag:]
-			result['window_size'] = window_size
-			result['lag'] = lag
+		# elif model_selection == 'LSTM+GBM':
+		# 	model = LSTM_GBM(train, window_size=window_size, lags=lag)
+		# 	insample_data = train[window_size + lag:]
+		# 	result['window_size'] = window_size
+		# 	result['lag'] = lag
 
 		# Fit model
 		model.fit()
@@ -125,7 +124,7 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 		result['model_name'] = model_selection
 		result['model'] = model
 	except Exception as e:
-		# print(e)
+		print(e)
 		result['status'] = False
 
 	return result
@@ -194,12 +193,12 @@ def run_model_without_parameters(train: pd.Series, test: pd.Series, model_select
 			                                   order=chosen_order)
 			if result['status']:
 				lst_result.append(result)
-	elif model_selection == 'LSTM+GBM':
-		for lstm_param in lst_lstm:
-			result = run_model_with_parameters(train, test, model_selection='LSTM+GBM',
-			                                   window_size=lstm_param[0], lag=lstm_param[1])
-			if result['status']:
-				lst_result.append(result)
+	# elif model_selection == 'LSTM+GBM':
+	# 	for lstm_param in lst_lstm:
+	# 		result = run_model_with_parameters(train, test, model_selection='LSTM+GBM',
+	# 		                                   window_size=lstm_param[0], lag=lstm_param[1])
+	# 		if result['status']:
+	# 			lst_result.append(result)
 
 	# Model selection: model is selected based on MAE of test result
 	result_selection = choose_model(lst_result)

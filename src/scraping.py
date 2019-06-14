@@ -32,7 +32,7 @@ class WebScraping:
 	def scrape_indices(driver: webdriver):
 		xpath_lst = REAL_TIME_HEADER_XPATH
 		row = {}
-		time_stamp = time.time()
+		time_stamp = time.time() + 25200
 		for item in xpath_lst:
 			element = WebDriverWait(driver, 10).until(lambda dr: driver.find_element_by_xpath(item['xpath']))
 			row[item['header']] = element.text
@@ -45,7 +45,7 @@ class WebScraping:
 		for item in COMPONENT_HEADER_DATA:
 			element_lst = WebDriverWait(driver, 10).until(lambda dr: driver.find_elements_by_xpath(item['xpath']))
 			df[item['header']] = [element.text for element in element_lst]
-		time_stamp = time.time()
+		time_stamp = time.time() + 25200
 		df['timestamp'] = time_stamp
 		return df
 
@@ -147,7 +147,7 @@ class WebScraping:
 				change=np.mean(df['change']),
 				chang_per=np.mean(df['change_per']),
 				volume=list(df['volume'])[-1],
-				date=time.time(),
+				date=time.time() + 7 * 3600,
 			)
 			lst_1.append(tmp)
 		if self.verbose:
@@ -169,7 +169,7 @@ class WebScraping:
 				change=np.mean(df['change']),
 				chang_per=np.mean(df['change_per']),
 				volume=list(df['volume'])[-1],
-				date=time.time(),
+				date=time.time() + 7 * 3600,
 			)
 			lst_2.append(tmp)
 		if self.verbose:
