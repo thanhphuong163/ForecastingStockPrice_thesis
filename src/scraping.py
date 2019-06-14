@@ -44,7 +44,10 @@ class WebScraping:
 		df = pd.DataFrame()
 		for item in COMPONENT_HEADER_DATA:
 			element_lst = WebDriverWait(driver, 10).until(lambda dr: driver.find_elements_by_xpath(item['xpath']))
-			df[item['header']] = [element.text for element in element_lst]
+			if item['header'] == 'name':
+				df[item['header']] = [element.get_attribute('title') for element in element_lst]
+			else:
+				df[item['header']] = [element.text for element in element_lst]
 		time_stamp = time.time() + 25200
 		df['timestamp'] = time_stamp
 		return df
@@ -184,6 +187,18 @@ class WebScraping:
 		self.component_df = pd.DataFrame()
 
 	async def start_scraping(self):
+		if self.verbose:
+			print('Start scraping...')
+		start = time.time()
+		while True:
+			current = time.time()
+			if current - start < SCRAPING_TIME:
+				self.scraping()
+			else:
+				self.organize_data()
+				start = time.time()
+
+	def _start_scraping(self):
 		if self.verbose:
 			print('Start scraping...')
 		start = time.time()
