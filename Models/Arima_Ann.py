@@ -44,6 +44,7 @@ class ArimaModel:
 		return pred_mean
 
 	def validate(self, test_data):
+		self.test = test_data
 		historical_data = list(self.historical_data)
 		predictions = list()
 
@@ -54,19 +55,26 @@ class ArimaModel:
 			output = model_fit.forecast()
 			predictions.append(output[0])
 			historical_data.append(test_data[t])
-		return pd.Series(predictions, index=test_data.index).fillna(0)
+
+		tmp = pd.Series(predictions, index=test_data.index).fillna(0)
+		series_prediction = self.historical_data[-1:].append(tmp)
+		return series_prediction
 
 	def predict_multi_step_ahead(self, start=None, steps=5, freq='D'):
 		# Initialize index
 		if start is None:
 			start = self.historical_data.index[-1] + pd.Timedelta(value=1, unit=freq)
+			extra_data = self.historical_data[-1:]
+		else:
+			start = self.test.index[-1] + pd.Timedelta(value=1, unit=freq)
+			extra_data = self.test[-1:]
 
 		datetime_index = pd.date_range(start, periods=steps, freq=freq)
 
 		# Get forecasting values
 		pred = self.model_result.get_forecast(steps=steps)
 		pred_mean = pred.predicted_mean
-		series = pd.Series(data=pred_mean.values, index=datetime_index)
+		series = extra_data.append(pd.Series(data=pred_mean.values, index=datetime_index))
 		return series
 
 
@@ -114,6 +122,7 @@ class AnnModel:
 		return series_yhat
 
 	def validate(self, testing_data):
+		self.test = testing_data
 		# Transform data
 		data = self.historical_data[-self.lag:].append(testing_data)
 		reshaped_data = np.reshape(data.values, (len(data), 1))
@@ -125,12 +134,15 @@ class AnnModel:
 		pred = self.model.predict(x)
 		reshaped_pred = np.reshape(pred, (len(pred), 1))
 		predictions = self.scaler.inverse_transform(reshaped_pred)
-		return pd.Series(data=predictions.flatten(), index=testing_data.index)
+		return self.historical_data[-1:].append(pd.Series(data=predictions.flatten(), index=testing_data.index))
 
 	def predict_multi_step_ahead(self, start=None, steps=5, freq='D'):
 		# Initialize index
 		if start is None:
 			start = self.historical_data.index[-1] + pd.Timedelta(value=1, unit=freq)
+			extra_data = self.historical_data[-1:]
+		else:
+			extra_data = self.test[-1:]
 		datetime_index = pd.date_range(start, periods=steps, freq=freq)
 
 		# Get forecasting values
@@ -150,7 +162,7 @@ class AnnModel:
 		reshaped_pred = np.reshape(pred, (len(pred), 1))
 		descaled_pred = self.scaler.inverse_transform(reshaped_pred)
 		series = pd.Series(descaled_pred.flatten(), index=datetime_index)
-		return series
+		return extra_data.append(series)
 
 
 class HybridModel:
@@ -180,11 +192,12 @@ class HybridModel:
 		pred_mean = self.arima_model.predict_multi_step_ahead(start=start, steps=steps, freq=freq)
 		pred_residuals = self.ann_model.predict_multi_step_ahead(start=start, steps=steps, freq=freq)
 		predictions = pred_mean + pred_residuals
-		return predictions
+		return self.test[-1:].append(predictions)
 
 	def validate(self, testing_data):
+		self.test = self.historical_data[-1:].append(testing_data)
 		pred_mean = self.arima_model.validate(testing_data)
-		residuals = testing_data - pred_mean
+		residuals = testing_data - pred_mean[1:]
 		pred_residuals = self.ann_model.validate(residuals)
 		predictions = pred_mean + pred_residuals
 		return predictions

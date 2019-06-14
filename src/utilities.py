@@ -3,6 +3,7 @@
 # Created at: 21:50
 import asyncio
 import itertools
+import time as t
 
 import numpy as np
 import pandas as pd
@@ -14,7 +15,7 @@ from statsmodels.tsa.stattools import pacf, acf
 from tqdm import tqdm_notebook as tqdm
 
 from Models.Arima_Ann import HybridModel, AnnModel, ArimaModel
-# from Models.Lstm_geo_hybrid import LSTM_GBM
+from Models.Lstm_geo_hybrid import LSTM_GBM
 from src.config_tickets import ticket_lst
 from src.scraping import WebScraping
 
@@ -99,21 +100,24 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 			result['order'] = order
 			result['lag'] = lag
 			result['hidden_layers'] = hidden_layers
-		# elif model_selection == 'LSTM+GBM':
-		# 	model = LSTM_GBM(train, window_size=window_size, lags=lag)
-		# 	insample_data = train[window_size + lag:]
-		# 	result['window_size'] = window_size
-		# 	result['lag'] = lag
+		elif model_selection == 'LSTM_GBM':
+			print('Run model LSTM')
+			model = LSTM_GBM(train, window_size=window_size, lags=lag, verbose=True)
+			insample_data = train[window_size + lag:]
+			result['window_size'] = window_size
+			result['lag'] = lag
 
 		# Fit model
+		start = t.time()
 		model.fit()
+		running_time = t.time() - start
 
 		# Evaluation
-		train_validate = pd.DataFrame()
-		train_validate['y'] = insample_data
-		train_validate['yhat'] = model.get_insample_prediction()
-		train_result = evaluation(train_validate)
-		result['train_evaluation'] = train_result
+		# train_validate = pd.DataFrame()
+		# train_validate['y'] = insample_data
+		# train_validate['yhat'] = model.get_insample_prediction()
+		# train_result = evaluation(train_validate)
+		# result['train_evaluation'] = train_result
 
 		test_validate = pd.DataFrame()
 		test_validate['y'] = test
@@ -123,6 +127,15 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 		result['status'] = True
 		result['model_name'] = model_selection
 		result['model'] = model
+	# result['training_time'] = running_time
+	# df_drift = pd.DataFrame()
+	# df_drift['y'] = model.target_drift
+	# df_drift['yhat'] = model.pred_drift
+	# df_volatility = pd.DataFrame()
+	# df_volatility['y'] = model.target_volatility
+	# df_volatility['yhat'] = model.pred_volatility
+	# result['drift_validation'] = df_drift
+	# result['volatility_validation'] = df_volatility
 	except Exception as e:
 		print(e)
 		result['status'] = False
@@ -193,12 +206,12 @@ def run_model_without_parameters(train: pd.Series, test: pd.Series, model_select
 			                                   order=chosen_order)
 			if result['status']:
 				lst_result.append(result)
-	# elif model_selection == 'LSTM+GBM':
-	# 	for lstm_param in lst_lstm:
-	# 		result = run_model_with_parameters(train, test, model_selection='LSTM+GBM',
-	# 		                                   window_size=lstm_param[0], lag=lstm_param[1])
-	# 		if result['status']:
-	# 			lst_result.append(result)
+	elif model_selection == 'LSTM+GBM':
+		for lstm_param in lst_lstm:
+			result = run_model_with_parameters(train, test, model_selection='LSTM+GBM',
+			                                   window_size=lstm_param[0], lag=lstm_param[1])
+			if result['status']:
+				lst_result.append(result)
 
 	# Model selection: model is selected based on MAE of test result
 	result_selection = choose_model(lst_result)
