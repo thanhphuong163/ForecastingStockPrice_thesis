@@ -127,15 +127,15 @@ def run_model_with_parameters(train: pd.Series, test: pd.Series,
 		result['status'] = True
 		result['model_name'] = model_selection
 		result['model'] = model
-	# result['training_time'] = running_time
-	# df_drift = pd.DataFrame()
-	# df_drift['y'] = model.target_drift
-	# df_drift['yhat'] = model.pred_drift
-	# df_volatility = pd.DataFrame()
-	# df_volatility['y'] = model.target_volatility
-	# df_volatility['yhat'] = model.pred_volatility
-	# result['drift_validation'] = df_drift
-	# result['volatility_validation'] = df_volatility
+		# result['training_time'] = running_time
+		df_drift = pd.DataFrame()
+		df_drift['y'] = model.target_drift
+		df_drift['yhat'] = model.pred_drift
+		df_volatility = pd.DataFrame()
+		df_volatility['y'] = model.target_volatility
+		df_volatility['yhat'] = model.pred_volatility
+		result['drift_validation'] = df_drift
+		result['volatility_validation'] = df_volatility
 	except Exception as e:
 		print(e)
 		result['status'] = False
