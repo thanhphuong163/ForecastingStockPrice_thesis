@@ -347,7 +347,7 @@ def prepare_sys(n, m, k, fun, bc, fun_jac, bc_jac, x, h):
     return col_fun, sys_jac
 
 
-def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
+def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol):
     """Solve the nonlinear collocation system by a Newton method.
 
     This is a simple Newton method with a backtracking line search. As
@@ -389,8 +389,6 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
         singular term. If None, the singular term is assumed to be absent.
     bvp_tol : float
         Tolerance to which we want to solve a BVP.
-    bc_tol : float
-        Tolerance to which we want to satisfy the boundary conditions.
 
     Returns
     -------
@@ -416,6 +414,12 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
     # the condition as col_res < tol_r * (1 + np.abs(f_middle)), then tol_r
     # should be computed as follows:
     tol_r = 2/3 * h * 5e-2 * bvp_tol
+
+    # We also need to control residuals of the boundary conditions. But it
+    # seems that they become very small eventually as the solver progresses,
+    # i. e. the tolerance for BC are not very important. We set it 1.5 orders
+    # lower than the BVP tolerance as well.
+    tol_bc = 5e-2 * bvp_tol
 
     # Maximum allowed number of Jacobian evaluation and factorization, in
     # other words the maximum number of full Newton iterations. A small value
@@ -487,7 +491,7 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
             break
 
         if (np.all(np.abs(col_res) < tol_r * (1 + np.abs(f_middle))) and
-                np.all(np.abs(bc_res) < bc_tol)):
+                np.all(bc_res < tol_bc)):
             break
 
         # If the full step was taken, then we are going to continue with
@@ -503,15 +507,13 @@ def solve_newton(n, m, h, col_fun, bc, jac, y, p, B, bvp_tol, bc_tol):
 
 
 def print_iteration_header():
-    print("{:^15}{:^15}{:^15}{:^15}{:^15}".format(
-        "Iteration", "Max residual", "Max BC residual", "Total nodes", 
-        "Nodes added"))
+    print("{:^15}{:^15}{:^15}{:^15}".format(
+        "Iteration", "Max residual", "Total nodes", "Nodes added"))
 
 
-def print_iteration_progress(iteration, residual, bc_residual, total_nodes,
-                             nodes_added):
-    print("{:^15}{:^15.2e}{:^15.2e}{:^15}{:^15}".format(
-        iteration, residual, bc_residual, total_nodes, nodes_added))
+def print_iteration_progress(iteration, residual, total_nodes, nodes_added):
+    print("{:^15}{:^15.2e}{:^15}{:^15}".format(
+        iteration, residual, total_nodes, nodes_added))
 
 
 class BVPResult(OptimizeResult):
@@ -521,8 +523,7 @@ class BVPResult(OptimizeResult):
 TERMINATION_MESSAGES = {
     0: "The algorithm converged to the desired accuracy.",
     1: "The maximum number of mesh nodes is exceeded.",
-    2: "A singular Jacobian encountered when solving the collocation system.",
-    3: "The solver was unable to satisfy boundary conditions tolerance on iteration 10."
+    2: "A singular Jacobian encountered when solving the collocation system."
 }
 
 
@@ -711,7 +712,7 @@ def wrap_functions(fun, bc, fun_jac, bc_jac, k, a, S, D, dtype):
 
 
 def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
-              tol=1e-3, max_nodes=1000, verbose=0, bc_tol=None):
+              tol=1e-3, max_nodes=1000, verbose=0):
     """Solve a boundary-value problem for a system of ODEs.
 
     This function numerically solves a first order system of ODEs subject to
@@ -818,11 +819,6 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
             * 0 (default) : work silently.
             * 1 : display a termination report.
             * 2 : display progress during iterations.
-    bc_tol : float, optional
-        Desired absolute tolerance for the boundary condition residuals: `bc` 
-        value should satisfy ``abs(bc) < bc_tol`` component-wise. 
-        Equals to `tol` by default. Up to 10 iterations are allowed to achieve this
-        tolerance.
 
     Returns
     -------
@@ -1052,13 +1048,7 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
     else:
         B = None
         D = None
-    
-    if bc_tol is None:
-        bc_tol = tol
 
-    # Maximum number of iterations    
-    max_iteration = 10
-    
     fun_wrapped, bc_wrapped, fun_jac_wrapped, bc_jac_wrapped = wrap_functions(
         fun, bc, fun_jac, bc_jac, k, a, S, D, dtype)
 
@@ -1083,14 +1073,11 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
         col_fun, jac_sys = prepare_sys(n, m, k, fun_wrapped, bc_wrapped,
                                        fun_jac_wrapped, bc_jac_wrapped, x, h)
         y, p, singular = solve_newton(n, m, h, col_fun, bc_wrapped, jac_sys,
-                                      y, p, B, tol, bc_tol)
+                                      y, p, B, tol)
         iteration += 1
 
         col_res, y_middle, f, f_middle = collocation_fun(fun_wrapped, y,
                                                          p, x, h)
-        bc_res = bc_wrapped(y[:, 0], y[:, -1], p)
-        max_bc_res = np.max(abs(bc_res))
-
         # This relation is not trivial, but can be verified.
         r_middle = 1.5 * col_res / h
         sol = create_spline(y, f, x, h)
@@ -1110,48 +1097,34 @@ def solve_bvp(fun, bc, x, y, p=None, S=None, fun_jac=None, bc_jac=None,
             status = 1
             if verbose == 2:
                 nodes_added = "({})".format(nodes_added)
-                print_iteration_progress(iteration, max_rms_res, max_bc_res,
-                                         m, nodes_added)
+                print_iteration_progress(iteration, max_rms_res, m,
+                                         nodes_added)
             break
 
         if verbose == 2:
-            print_iteration_progress(iteration, max_rms_res, max_bc_res, m,
-                                     nodes_added)
+            print_iteration_progress(iteration, max_rms_res, m, nodes_added)
 
         if nodes_added > 0:
             x = modify_mesh(x, insert_1, insert_2)
             h = np.diff(x)
             y = sol(x)
-        elif max_bc_res <= bc_tol: 
+        else:
             status = 0
-            break
-        elif iteration >= max_iteration:
-            status = 3
             break
 
     if verbose > 0:
         if status == 0:
-            print("Solved in {} iterations, number of nodes {}. \n"
-                  "Maximum relative residual: {:.2e} \n"
-                  "Maximum boundary residual: {:.2e}"
-                  .format(iteration, x.shape[0], max_rms_res, max_bc_res))
+            print("Solved in {} iterations, number of nodes {}, "
+                  "maximum relative residual {:.2e}."
+                  .format(iteration, x.shape[0], max_rms_res))
         elif status == 1:
-            print("Number of nodes is exceeded after iteration {}. \n"
-                  "Maximum relative residual: {:.2e} \n"
-                  "Maximum boundary residual: {:.2e}"
-                  .format(iteration, max_rms_res, max_bc_res))
+            print("Number of nodes is exceeded after iteration {}, "
+                  "maximum relative residual {:.2e}."
+                  .format(iteration, max_rms_res))
         elif status == 2:
             print("Singular Jacobian encountered when solving the collocation "
-                  "system on iteration {}. \n"
-                  "Maximum relative residual: {:.2e} \n"
-                  "Maximum boundary residual: {:.2e}"
-                  .format(iteration, max_rms_res, max_bc_res))
-        elif status == 3:
-            print("The solver was unable to satisfy boundary conditions "
-                  "tolerance on iteration {}. \n"
-                  "Maximum relative residual: {:.2e} \n"
-                  "Maximum boundary residual: {:.2e}"
-                  .format(iteration, max_rms_res, max_bc_res))
+                  "system on iteration {}, maximum relative residual {:.2e}."
+                  .format(iteration, max_rms_res))
 
     if p.size == 0:
         p = None

@@ -98,5 +98,4 @@ if __name__ == '__main__':
 	# lst_symbol = query_data.get_list_ticket()
 	# print(lst_symbol)
 # get_real_time_data(client)
-
 # demo()
