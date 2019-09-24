@@ -214,7 +214,7 @@ external_stylesheets = [
     "https://cdn.rawgit.com/amadoukane96/8f29daabc5cacb0b7e77707fc1956373/raw/854b1dc5d8b25cd2c36002e1e4f598f5f4ebeee3/test.css",
     "https://use.fontawesome.com/releases/v5.2.0/css/all.css",
     "https://npmcdn.com/react-select@1.0.0-beta13/dist/react-select.css",
-    'https://codepen.io/vantienduclqd/pen/mYxQzd.css',
+    'https://codepen.io/vantienduclqd/pen/bPrJBq.css',
     {
         'href': 'https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css',
         'rel': 'stylesheet',
@@ -280,7 +280,6 @@ def get_color(a, b):
         return "#45df7e"
     else:
         return "#da5657"
-
 
 def chart_div():
     return html.Div(
@@ -514,7 +513,7 @@ app.layout = html.Div(
     [
         # live clock update
         dcc.Interval(id="interval", interval=1 * 1000, n_intervals=0),
-        # stock informations update
+        #stock informations update
         dcc.Interval(id='infor-interval', interval=1 * 10000, n_intervals=0),
         dcc.ConfirmDialog(
             id='confirm',
@@ -537,14 +536,6 @@ app.layout = html.Div(
                                 dcc.Dropdown(
                                     id='indice-component',
                                 ),
-                                # dcc.DatePickerRange(
-                                #     id='my-date-picker-range',
-                                #     min_date_allowed=dt(1995, 8, 5),
-                                #     max_date_allowed=dt.now(),
-                                #     initial_visible_month=dt(2019, 3, 1),
-                                #     end_date=dt(2019, 3, 21),
-                                #     updatemode='bothdates'
-                                # ),
                                 html.Div(
                                     id='indice-information',
                                 ),
@@ -603,6 +594,14 @@ app.layout = html.Div(
                         html.Div(
                             id='hide-switch',
                             style={'display': 'none'}
+                        ),
+                        html.P(
+                            "Real-time data updating ...",
+                            style={'textAlign': 'center', 'color': 'white'}
+                        ),
+                        html.Div(
+                            id='loading',
+                            style={'margin': '0 auto'}
                         )
 
                     ],
@@ -618,6 +617,12 @@ app.layout = html.Div(
             id="charts",
             className="nine columns",
         ),
+        # html.Div(
+        #     [chart_div()],
+        #     style={"height": "70%", "margin": "0px 5px", "float": "right"},
+        #     id="charts_volumn",
+        #     className="nine columns",
+        # ),
         html.Div([modal()])
     ],
     style={"paddingTop": "15px", "backgroundColor": "#1a2d46", "height": "100vh", "overflow": "auto",
@@ -1852,6 +1857,8 @@ def graph_validation(
         figure.append_trace(trace_predict, 1, 1)
         figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 20}
         figure['layout'] = dict(paper_bgcolor="#18252E", plot_bgcolor="#18252E", font=dict(color='white'))
+        print("figure")
+        print(figure)
         return dcc.Graph(
             id='validation-graph',
             figure=figure,
@@ -2338,7 +2345,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                 y=df_history['close'],
                 mode='lines',
                 line=dict(color='#4f94c4'),
-                name="history data",
+                name="history price",
             )
         elif (chart_type == 'mountain_trace'):
             trace_ind = go.Scatter(
@@ -2347,7 +2354,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                 mode='lines',
                 line=dict(color='#4f94c4'),
                 fill="tozeroy",
-                name="history data",
+                name="history price",
             )
         elif (chart_type == 'candlestick_trace'):
             trace_ind = go.Candlestick(
@@ -2358,7 +2365,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                 close=df_history["close"],
                 increasing=dict(line=dict(color="#00ff00")),
                 decreasing=dict(line=dict(color="white")),
-                name="history data",
+                name="history price",
             )
 
         trace_mock = go.Scatter(
@@ -2366,11 +2373,20 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
             y=df_ind['last'],
             mode='lines',
             line=dict(color='#28a745'),
-            name="real-time data",
+            name="real-time price",
             opacity=0.8,
         )
 
-        rows = 2
+        trace_volume = go.Scatter(
+            x=df_ind['date'],
+            y=df_ind['volume'],
+            mode='lines',
+            line=dict(color='#FF7D41'),
+            name="real-time volume",
+            opacity=0.8,
+        )
+
+        rows = 3
         figure = tools.make_subplots(
             rows=rows,
             cols=1,
@@ -2391,6 +2407,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
 
         figure.append_trace(trace_ind, 1, 1)
         figure.append_trace(trace_mock, 2, 1)
+        figure.append_trace(trace_volume, 3, 1)
         figure['layout']["margin"] = {"b": 50, "r": 5, "l": 50, "t": 5}
         figure['layout']['xaxis'].update(title='1', showgrid=False)
         figure['layout']['yaxis'].update(title='2', showgrid=False)
@@ -2398,7 +2415,7 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
                                 font=dict(color='white'))
         figure['layout']['yaxis'] = dict(
             # range=[800, 1000],
-            domain=[0.55, 1]
+            domain=[0.65, 1]
         )
         figure['layout']['xaxis'] = dict(
             rangeselector=dict(
@@ -2442,7 +2459,11 @@ def update_graph_scatter(input_data, input_data_component, chart_type, studies):
         #     )
         figure['layout']['yaxis2'] = dict(
             range=[min(df_history['close']), max(df_history['close'])],
-            domain=[0, 0.45]
+            domain=[0.35, 0.55]
+        )
+        figure['layout']['yaxis3'] = dict(
+            # range=[min(df_history['volume']), max(df_history['volume'])],
+            domain=[0, 0.25]
         )
         return dcc.Graph(
             id='example-graph',
